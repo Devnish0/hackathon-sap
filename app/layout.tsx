@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ResilienceProvider } from "@/lib/context/ResilienceContext";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
-  variable: "--font-instrument-serif",
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -40,13 +40,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
+      data-theme="cupcake"
+      className={`${plusJakartaSans.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >
-      <body className="h-screen bg-[#0B0D0E] text-[#E8E5DD] font-sans antialiased overflow-hidden selection:bg-[#23282A] selection:text-[#E8E5DD]">
+      <body className="h-screen font-sans antialiased overflow-hidden bg-base-100 text-base-content">
         <ResilienceProvider>
           <div className="flex h-screen w-screen overflow-hidden">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-mission-grid">
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-mission-grid bg-base-100">
               <Header />
               <div className="flex-1 flex flex-col">{children}</div>
             </div>

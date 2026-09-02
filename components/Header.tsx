@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useResilience } from "@/lib/context/ResilienceContext";
-import { Clock, Radio, ShieldAlert } from "lucide-react";
+import { Clock, Wifi } from "lucide-react";
 
 export default function Header() {
   const { systemMode, isRecovering } = useResilience();
-  const [timeString, setTimeString] = useState("17:42:08 UTC");
+  const [timeString, setTimeString] = useState("17:42:08");
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTimeString(now.toTimeString().split(" ")[0] + " UTC");
+      setTimeString(now.toTimeString().split(" ")[0]);
     };
     updateTime();
     const timer = setInterval(updateTime, 1000);
@@ -19,46 +19,50 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="h-10 border-b border-[#1C2123] bg-[#0B0D0E] px-6 flex items-center justify-between text-xs select-none">
-      {/* Active Operational Context Breadcrumb */}
-      <div className="flex items-center space-x-3 text-[11px] font-mono">
-        <div className="flex items-center space-x-2">
+    <div className="navbar bg-base-100 min-h-10 h-10 border-b border-base-300 px-6">
+      {/* Left: Operational status */}
+      <div className="flex-1">
+        <div className="flex items-center gap-2 text-xs font-mono">
           {systemMode === "LIVE_DISRUPTION" ? (
             <>
-              <span className="w-2 h-2 rounded-full bg-[#D7655A] animate-pulse" />
-              <span className="text-[#D7655A] font-semibold tracking-wider">
-                LIVE DISRUPTION ACTIVE: SHANGHAI PORT (CNSHG)
+              <span className="badge badge-error badge-xs animate-pulse" />
+              <span className="text-error font-semibold">
+                LIVE DISRUPTION — SHANGHAI PORT (CNSHG)
               </span>
             </>
           ) : isRecovering ? (
             <>
-              <span className="w-2 h-2 rounded-full bg-[#D6A84F] animate-ping" />
-              <span className="text-[#D6A84F] font-semibold tracking-wider">
-                EXECUTING MULTI-STAGE RECOVERY ACTIONS...
+              <span className="badge badge-warning badge-xs animate-bounce" />
+              <span className="text-warning font-semibold">
+                EXECUTING RECOVERY ACTIONS...
               </span>
             </>
           ) : (
             <>
-              <span className="w-2 h-2 rounded-full bg-[#62B8C8]" />
-              <span className="text-[#9A9C97]">
-                CONTINUOUS REHEARSAL MONITORING: <b className="text-[#E8E5DD]">SHANGHAI YANGSHAN FAIRWAY</b>
+              <span className="badge badge-primary badge-xs" />
+              <span className="text-base-content/50">
+                Rehearsal monitoring:{" "}
+                <span className="text-base-content font-medium">Shanghai Yangshan Fairway</span>
               </span>
             </>
           )}
         </div>
       </div>
 
-      {/* Telemetry Clock & System Sync */}
-      <div className="flex items-center space-x-4 text-[11px] font-mono text-[#656B69]">
-        <div className="flex items-center space-x-1.5">
-          <Clock className="w-3.5 h-3.5" />
-          <span className="text-[#9A9C97]">{timeString}</span>
-        </div>
-        <span>·</span>
-        <div className="flex items-center space-x-1 text-[#73B58A]">
-          <span>FEED SYNCED</span>
+      {/* Right: Clock & sync */}
+      <div className="flex-none">
+        <div className="flex items-center gap-3 text-xs font-mono text-base-content/40">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="tabular-data">{timeString}</span>
+          </div>
+          <div className="divider divider-horizontal m-0 w-0" />
+          <div className="flex items-center gap-1 text-success">
+            <Wifi className="w-3 h-3" />
+            <span className="text-[10px]">SYNCED</span>
+          </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

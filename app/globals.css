@@ -2,55 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #0B0D0E;
-  --surface: #111416;
-  --surface-raised: #161A1C;
-  --surface-overlay: #1B2023;
-
-  --text-primary: #E8E5DD;
-  --text-secondary: #9A9C97;
-  --text-muted: #656B69;
-
-  --border: #23282A;
-  --border-subtle: #171B1D;
-  --border-focus: #373F42;
-
-  --accent: #D6A84F;
-  --telemetry: #62B8C8;
-
-  --success: #73B58A;
-  --warning: #D6A84F;
-  --danger: #D7655A;
-}
-
+/* ─── Global Resets & Defaults ─── */
 * {
   box-sizing: border-box;
 }
 
 html,
 body {
-  background-color: var(--background);
-  color: var(--text-primary);
-  font-family: var(--font-ibm-plex-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-ibm-plex-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Subtle Technical Atmosphere Grid (Very faint, zero distraction) */
+/* ─── Subtle Background Atmosphere ─── */
 .bg-mission-grid {
-  background-color: var(--background);
-  background-image: 
-    linear-gradient(to right, rgba(41, 46, 47, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(41, 46, 47, 0.08) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, oklch(var(--bc) / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(var(--bc) / 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
-/* Precision Corner Marks */
+/* ─── Precision Corner Marks ─── */
 .tech-corner {
   position: relative;
 }
@@ -61,8 +37,8 @@ body {
   left: 0;
   width: 5px;
   height: 5px;
-  border-top: 1px solid var(--telemetry);
-  border-left: 1px solid var(--telemetry);
+  border-top: 1px solid oklch(var(--p));
+  border-left: 1px solid oklch(var(--p));
   pointer-events: none;
 }
 .tech-corner::after {
@@ -72,12 +48,12 @@ body {
   right: 0;
   width: 5px;
   height: 5px;
-  border-bottom: 1px solid var(--telemetry);
-  border-right: 1px solid var(--telemetry);
+  border-bottom: 1px solid oklch(var(--p));
+  border-right: 1px solid oklch(var(--p));
   pointer-events: none;
 }
 
-/* Minimalist Industrial Scrollbar */
+/* ─── Minimalist Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -86,36 +62,37 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 0px;
+  background: oklch(var(--bc) / 0.15);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: oklch(var(--bc) / 0.25);
 }
 
+/* ─── Tabular Numeric Data ─── */
 .tabular-data {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-ibm-plex-mono), monospace;
 }
 
-/* Clean React Flow Canvas Overrides */
+/* ─── React Flow Canvas Overrides (Cupcake Compatible) ─── */
 .react-flow__background {
   background-color: transparent !important;
 }
 .react-flow__controls {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 0px !important;
-  box-shadow: none !important;
+  background: oklch(var(--b2)) !important;
+  border: 1px solid oklch(var(--bc) / 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
 }
 .react-flow__controls-button {
-  background: var(--surface) !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--text-secondary) !important;
+  background: oklch(var(--b2)) !important;
+  border-bottom: 1px solid oklch(var(--bc) / 0.08) !important;
+  color: oklch(var(--bc) / 0.5) !important;
 }
 .react-flow__controls-button:hover {
-  background: var(--surface-raised) !important;
-  color: var(--text-primary) !important;
+  background: oklch(var(--b3)) !important;
+  color: oklch(var(--bc)) !important;
 }
 .react-flow__controls-button svg {
   fill: currentColor !important;

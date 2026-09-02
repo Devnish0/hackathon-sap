@@ -8,29 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        surface: {
-          DEFAULT: "var(--surface)",
-          raised: "var(--surface-raised)",
-          border: "var(--border)",
-        },
-        brand: {
-          text: "var(--text-primary)",
-          secondary: "var(--text-secondary)",
-          muted: "var(--text-muted)",
-          border: "var(--border)",
-        },
-        accent: "var(--accent)",
-        telemetry: "var(--telemetry)",
-        status: {
-          success: "var(--success)",
-          warning: "var(--warning)",
-          danger: "var(--danger)",
-        },
-      },
       fontFamily: {
-        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        serif: ["var(--font-display)", "system-ui", "sans-serif"], // mapped to display font for instant upgrade
         sans: ["var(--font-ibm-plex-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-ibm-plex-mono)", "Menlo", "monospace"],
       },
@@ -40,12 +20,19 @@ const config: Config = {
         md: "6px",
       },
       boxShadow: {
-        panel: "0 1px 3px 0 rgba(0, 0, 0, 0.4)",
-        overlay: "0 4px 16px 0 rgba(0, 0, 0, 0.6)",
+        panel: "0 1px 3px 0 rgba(0, 0, 0, 0.08)",
+        overlay: "0 4px 16px 0 rgba(0, 0, 0, 0.12)",
       },
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["cupcake"],
+    base: true,
+    styled: true,
+    utils: true,
+    logs: false,
+  },
 };
 
 export default config;
