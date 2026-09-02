@@ -26,9 +26,11 @@ export default function DecisionsPage() {
     recoveryStep,
     resetToRehearsal,
     triggerLiveDisruption,
+    currentStrategy,
+    currentPlanPoints,
   } = useResilience();
 
-  const primaryStrategy = strategiesData[0];
+  const primaryStrategy = currentStrategy || strategiesData[0];
   const alternativeStrategies = strategiesData.slice(1);
 
   const recoverySteps = [
@@ -141,36 +143,69 @@ export default function DecisionsPage() {
             </p>
           </div>
 
-          {/* Action Dispatch Protocol */}
-          <div className="space-y-2">
-            <span className="text-xs text-base-content/40 font-mono uppercase">
-              Action Dispatch Protocol & Autonomy Gates:
-            </span>
-            <div className="space-y-1">
-              {primaryStrategy.actions.map((act) => {
-                const isAuto = act.autoExecEligible;
+          {/* Action Dispatch Protocol — High Clarity Recovery Points */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-base-content/60 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                Prepared Recovery Execution Plan ({currentPlanPoints.length} Action Points):
+              </span>
+              <span className="badge badge-outline badge-xs font-mono">Risk-Gated Autonomy</span>
+            </div>
+
+            <div className="space-y-2">
+              {currentPlanPoints.map((point) => {
+                const isAuto = point.gate === "AUTO_EXECUTE";
                 const isApproved = systemMode === "EXECUTING" || systemMode === "RECOVERED";
                 return (
-                  <div key={act.id} className="card bg-base-200 border border-base-300">
-                    <div className="card-body p-3 flex-row items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isApproved ? (
-                          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-                        ) : isAuto ? (
-                          <Zap className="w-4 h-4 text-info shrink-0" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
-                        )}
-                        <div className="min-w-0">
-                          <span className="font-bold text-xs text-base-content">{act.id}: </span>
-                          <span className="text-xs text-base-content/50">{act.description}</span>
-                        </div>
-                      </div>
-                      <span className={`badge badge-sm shrink-0 font-mono ${
-                        isApproved ? "badge-success" : isAuto ? "badge-info" : "badge-warning"
-                      }`}>
-                        {isApproved ? "EXECUTED ✓" : isAuto ? "AUTO-EXEC" : "APPROVAL REQ"}
+                  <div
+                    key={point.step}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      point.gate === "HUMAN_APPROVAL_REQUIRED"
+                        ? "bg-warning/5 border-warning/30 shadow-xs"
+                        : "bg-base-200/70 border-base-300"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`w-6 h-6 rounded-full font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
+                          point.gate === "HUMAN_APPROVAL_REQUIRED"
+                            ? "bg-warning text-warning-content"
+                            : "bg-primary text-primary-content"
+                        }`}
+                      >
+                        {point.step}
                       </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                          <span className="font-bold text-sm text-base-content">
+                            {point.action}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="badge badge-ghost badge-xs font-mono">
+                              {point.agent} AGENT
+                            </span>
+                            <span
+                              className={`badge badge-sm font-mono font-semibold ${
+                                isApproved
+                                  ? "badge-success"
+                                  : isAuto
+                                  ? "badge-info"
+                                  : "badge-warning"
+                              }`}
+                            >
+                              {isApproved
+                                ? "EXECUTED ✓"
+                                : isAuto
+                                ? "AUTO-EXEC"
+                                : "APPROVAL REQUIRED"}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-base-content/70 leading-relaxed font-sans">
+                          {point.detail}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );

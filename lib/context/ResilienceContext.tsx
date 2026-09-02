@@ -6,6 +6,7 @@ import {
   MOCK_SCENARIO_SUITES,
   MockScenarioSuite,
   RehearsalScenario,
+  PlanPoint,
   generateDynamicScenariosForSignal,
 } from "@/lib/simulation/dynamicScenarios";
 import { EnhancedSignal } from "@/lib/signals/multiSource";
@@ -37,6 +38,7 @@ interface ResilienceContextType {
   currentSignal: DisruptionSignal;
   currentScenarios: RehearsalScenario[];
   currentStrategy: StrategyOption;
+  currentPlanPoints: PlanPoint[];
   disruptedNodeId: string;
 
   approvedActions: string[];
@@ -145,6 +147,36 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     tradeoffRationale: activeMockSuite.recommendedStrategy.tradeoffRationale,
   };
 
+  const currentPlanPoints: PlanPoint[] =
+    dataMode === "MOCK_SCENARIO"
+      ? activeMockSuite.recommendedStrategy.planPoints
+      : [
+          {
+            step: 1,
+            action: "Buffer Containment: Pre-position Domestic Safety Stock",
+            detail: "Transfers 1,500 reserve units across regional distribution hubs to absorb initial lead-time shock.",
+            gate: "AUTO_EXECUTE",
+            gateLabel: "AUTO EXECUTE",
+            agent: "INVENTORY",
+          },
+          {
+            step: 2,
+            action: "Corridor Bypass: Reroute Sea-Freight via Alternate Feeder Hub",
+            detail: "Shifts container manifests to secondary deepwater feeder ports to bypass primary chokepoint queue.",
+            gate: "AUTO_EXECUTE",
+            gateLabel: "AUTO EXECUTE",
+            agent: "LOGISTICS",
+          },
+          {
+            step: 3,
+            action: "Contractual Sourcing Shift: Activate Reserve Supplier Line",
+            detail: "Allocates backup component volume with certified nearshore partner to protect OEM delivery SLA.",
+            gate: "HUMAN_APPROVAL_REQUIRED",
+            gateLabel: "APPROVAL REQUIRED",
+            agent: "PROCUREMENT",
+          },
+        ];
+
   const disruptedNodeId =
     dataMode === "REAL_TIME" && activeRealTimeSignal
       ? activeRealTimeSignal.eventType === "TRADE_POLICY"
@@ -248,6 +280,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         currentSignal,
         currentScenarios,
         currentStrategy,
+        currentPlanPoints,
         disruptedNodeId,
         approvedActions,
         isRecovering,

@@ -19,6 +19,15 @@ export interface RehearsalScenario {
   preparedPlaybook: string;
 }
 
+export interface PlanPoint {
+  step: number;
+  action: string;
+  detail: string;
+  gate: "AUTO_EXECUTE" | "HUMAN_APPROVAL_REQUIRED";
+  gateLabel: "AUTO EXECUTE" | "APPROVAL REQUIRED";
+  agent: "INVENTORY" | "LOGISTICS" | "PROCUREMENT" | "FINANCE" | "COMPLIANCE";
+}
+
 export interface MockScenarioSuite {
   id: string;
   title: string;
@@ -35,6 +44,7 @@ export interface MockScenarioSuite {
     risk: "LOW" | "HIGH";
     autonomyLevel: "AUTO_EXECUTE" | "HUMAN_APPROVAL_REQUIRED";
     tradeoffRationale: string;
+    planPoints: PlanPoint[];
   };
   initialHealth: number;
   disruptedNodeId: string;
@@ -43,10 +53,6 @@ export interface MockScenarioSuite {
 
 /**
  * Multiple Rich Benchmark Test Scenarios for Mock Mode
- * 1. Shanghai Port Berth Automation Stoppage (Gateway Disruption)
- * 2. Detroit Staging Hub Catastrophic Fire (Inventory Destroyed)
- * 3. Taiwan Semiconductor Fab Outage (Supplier Force Majeure)
- * 4. Trans-Pacific Category 5 Super Typhoon (Weather / In-Transit)
  */
 export const MOCK_SCENARIO_SUITES: MockScenarioSuite[] = [
   {
@@ -140,6 +146,32 @@ export const MOCK_SCENARIO_SUITES: MockScenarioSuite[] = [
       risk: "LOW",
       autonomyLevel: "HUMAN_APPROVAL_REQUIRED",
       tradeoffRationale: "Reduces Pacific disruption exposure while maintaining 97% service level within capacity constraints.",
+      planPoints: [
+        {
+          step: 1,
+          action: "Redistribute 1,500 Safety Units (Texas → Detroit)",
+          detail: "Transfers surplus stock from Austin warehouse to cover 12-day buffer gap during vessel berth delay.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "INVENTORY",
+        },
+        {
+          step: 2,
+          action: "Reroute Ever Vanguard via Port of Busan Feeder",
+          detail: "Bypasses congested Shanghai anchorage into South Korean feeder lane with +2 days transit delta.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "LOGISTICS",
+        },
+        {
+          step: 3,
+          action: "Shift 40% Volume to Midwest Semiconductor (SUP-03)",
+          detail: "Allocates 8,000 reserve units/mo from domestic supplier to protect OEM delivery window.",
+          gate: "HUMAN_APPROVAL_REQUIRED",
+          gateLabel: "APPROVAL REQUIRED",
+          agent: "PROCUREMENT",
+        },
+      ],
     },
   },
   {
@@ -226,13 +258,39 @@ export const MOCK_SCENARIO_SUITES: MockScenarioSuite[] = [
     recommendedStrategy: {
       id: "STRAT-FIRE",
       title: "Emergency Stock Surge & Air-Bridge Protocol",
-      summary: "Authorize immediate overland hot-shot transit of 8,500 units from Texas Buffer + charter dedicated air freight from Monterrey supplier to maintain OEM assembly line.",
+      summary: "Authorize immediate overland hot-shot transit of 8,500 units from Texas Buffer + charter dedicated air freight from Monterrey supplier.",
       costFormatted: "₹14.2L",
       recoveryDays: 4,
       serviceLevelPercent: 94,
       risk: "LOW",
       autonomyLevel: "HUMAN_APPROVAL_REQUIRED",
       tradeoffRationale: "Incurs higher expedited freight costs but prevents ₹48.9 Cr catastrophic assembly stoppage at OEM assembly plants.",
+      planPoints: [
+        {
+          step: 1,
+          action: "Dispatch Emergency Hot-Shot Convoy (Texas Depot)",
+          detail: "Releases 8,500 buffer units via dedicated team-driver trucks. Reaches Detroit plant gate in 18 hours.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "INVENTORY",
+        },
+        {
+          step: 2,
+          action: "Activate Toledo Auxiliary Cross-Dock Facility",
+          detail: "Reroutes all incoming Midwest component consignments away from fire-damaged hub into secondary cross-dock.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "LOGISTICS",
+        },
+        {
+          step: 3,
+          action: "Charter Dedicated Air-Bridge from Monterrey Fab",
+          detail: "Contracts 2 Boeing 737 cargo charters to airlift replacement harnesses from Mexico to eliminate plant stockout.",
+          gate: "HUMAN_APPROVAL_REQUIRED",
+          gateLabel: "APPROVAL REQUIRED",
+          agent: "PROCUREMENT",
+        },
+      ],
     },
   },
   {
@@ -319,13 +377,39 @@ export const MOCK_SCENARIO_SUITES: MockScenarioSuite[] = [
     recommendedStrategy: {
       id: "STRAT-CHIP",
       title: "Monterrey Nearshore Sourcing Pivot & Allocation Surge",
-      summary: "Shift 75% of wafer volume to Monterrey Supplier (SUP-02) reserve line + throttle build configurations to preserve high-margin OEM vehicle lines.",
+      summary: "Shift 75% of wafer volume to Monterrey Supplier (SUP-02) reserve line + throttle build configurations.",
       costFormatted: "₹18.5L",
       recoveryDays: 9,
       serviceLevelPercent: 91,
       risk: "LOW",
       autonomyLevel: "HUMAN_APPROVAL_REQUIRED",
       tradeoffRationale: "Qualifies certified nearshore fab capacity without long transit times, maintaining 91% vehicle delivery schedule.",
+      planPoints: [
+        {
+          step: 1,
+          action: "Lock Global Die Allocation & Inventory Reserves",
+          detail: "Freezes existing in-transit microcontroller stock for exclusive priority allocation to core SUV and EV production lines.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "INVENTORY",
+        },
+        {
+          step: 2,
+          action: "Ramp Nearshore Monterrey Capacity by 75%",
+          detail: "Executes expedited contract expansion on Monterrey qualified fab line (SUP-02) to backfill wafer volume within 9 days.",
+          gate: "HUMAN_APPROVAL_REQUIRED",
+          gateLabel: "APPROVAL REQUIRED",
+          agent: "PROCUREMENT",
+        },
+        {
+          step: 3,
+          action: "Throttle Vehicle Trim Mix (De-contenting Protocol)",
+          detail: "Temporarily pauses microchip-intensive luxury trim options, shifting plant production to standard lines to avoid idle factory shifts.",
+          gate: "HUMAN_APPROVAL_REQUIRED",
+          gateLabel: "APPROVAL REQUIRED",
+          agent: "FINANCE",
+        },
+      ],
     },
   },
   {
@@ -419,13 +503,38 @@ export const MOCK_SCENARIO_SUITES: MockScenarioSuite[] = [
       risk: "LOW",
       autonomyLevel: "AUTO_EXECUTE",
       tradeoffRationale: "Avoids 10-day California port berth demurrage and catches up 4 days of lost sailing time.",
+      planPoints: [
+        {
+          step: 1,
+          action: "Instruct Southern Rhumb Line Course Deviation",
+          detail: "Transmits weather-routing coordinates to vessel Ever Vanguard to steer clear of the 45ft wave quadrant.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "LOGISTICS",
+        },
+        {
+          step: 2,
+          action: "Divert Discharge from Long Beach to Port of Seattle",
+          detail: "Transfers container manifest to Seattle terminal to bypass California vessel anchoring backlogs.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "LOGISTICS",
+        },
+        {
+          step: 3,
+          action: "Pre-book BNSF Express Intermodal Rail Direct to Detroit",
+          detail: "Secures dedicated flatcar unit train from Seattle rail yard, cutting 4 days off overland transit to Michigan.",
+          gate: "AUTO_EXECUTE",
+          gateLabel: "AUTO EXECUTE",
+          agent: "LOGISTICS",
+        },
+      ],
     },
   },
 ];
 
 /**
  * Dynamic Scenario Rehearsal Generator for Live Real-Time Signals
- * Generates 2H, 24H, 7D, PERMANENT scenarios dynamically based on the real signal!
  */
 export function generateDynamicScenariosForSignal(signal: DisruptionSignal): RehearsalScenario[] {
   const baseExposure = signal.severity === "CRITICAL" ? 28 : signal.severity === "HIGH" ? 14 : 3.5;
