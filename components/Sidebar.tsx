@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Activity,
+  Globe,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -23,6 +24,7 @@ export default function Sidebar() {
 
   const navItems = [
     { href: "/", label: "Control Tower", icon: LayoutDashboard },
+    { href: "/osint", label: "OSINT World Map", icon: Globe },
     { href: "/network", label: "Digital Twin", icon: Network },
     { href: "/signals", label: "Signals", icon: Radio },
     { href: "/scenarios", label: "Rehearsals", icon: GitFork },
