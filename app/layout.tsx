@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ResilienceProvider } from "@/lib/context/ResilienceContext";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
+import AppShell from "@/components/AppShell";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["500", "600", "700", "800"],
@@ -45,13 +44,7 @@ export default function RootLayout({
     >
       <body className="h-screen font-sans antialiased overflow-hidden bg-base-100 text-base-content">
         <ResilienceProvider>
-          <div className="flex h-screen w-screen overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-mission-grid bg-base-100">
-              <Header />
-              <div className="flex-1 flex flex-col">{children}</div>
-            </div>
-          </div>
+          <AppShell>{children}</AppShell>
         </ResilienceProvider>
       </body>
     </html>
