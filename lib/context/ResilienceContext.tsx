@@ -26,6 +26,7 @@ interface ResilienceContextType {
   // AI-Generated Topology & Flow
   dynamicNetworkFlow: DynamicNetworkFlow | null;
   isAiSynthesizing: boolean;
+  refreshAiSimulation: (forceFresh?: boolean) => Promise<void>;
 
   // Mock Scenario Selection
   activeMockSuite: MockScenarioSuite;
@@ -104,51 +105,73 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       ? activeRealTimeSignal
       : activeMockSuite.signal;
 
-  // Synthesize AI Topology and Hybrid Strategy whenever currentSignal or mode changes
-  useEffect(() => {
-    let isCancelled = false;
-    async function updateFlow() {
-      setIsAiSynthesizing(true);
-      try {
-        // First try server-side endpoint where process.env.GEMINI_API_KEY from .env is loaded
-        const res = await fetch("/api/ai/simulate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ signal: currentSignal }),
-        });
+  // Dedicated AI simulation fetcher with localStorage caching & hard reload capability
+  const refreshAiSimulation = async (forceFresh = false) => {
+    setIsAiSynthesizing(true);
+    const cacheKey = `GEMINI_SIM_${currentSignal.id || "CUR"}_${currentSignal.location || ""}_${currentSignal.facility || ""}`
+      .replace(/[^a-zA-Z0-9_]/g, "_");
 
-        if (res.ok) {
-          const flow = await res.json();
-          if (!isCancelled) {
-            setDynamicNetworkFlow(flow);
-          }
-        } else {
-          // Fallback to local cognitive synthesis
-          const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
-          if (!isCancelled) {
-            setDynamicNetworkFlow(flow);
+    // 1. Check localStorage cache first if not hard reloading
+    if (!forceFresh && typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.supplier && parsed.hybridResponse) {
+            setDynamicNetworkFlow(parsed);
+            setIsAiSynthesizing(false);
+            return;
           }
         }
       } catch (e) {
-        console.error("AI flow synthesis error:", e);
-        try {
-          const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
-          if (!isCancelled) {
-            setDynamicNetworkFlow(flow);
-          }
-        } catch (fallbackErr) {
-          console.error("Fallback synthesis error:", fallbackErr);
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsAiSynthesizing(false);
-        }
+        console.warn("Could not read from localStorage cache:", e);
       }
     }
-    updateFlow();
-    return () => {
-      isCancelled = true;
-    };
+
+    // 2. Fetch fresh from server API (with fallback)
+    try {
+      const res = await fetch("/api/ai/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signal: currentSignal }),
+      });
+
+      if (res.ok) {
+        const flow = await res.json();
+        setDynamicNetworkFlow(flow);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(flow));
+          } catch (e) {
+            console.warn("Failed to write to localStorage:", e);
+          }
+        }
+      } else {
+        const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
+        setDynamicNetworkFlow(flow);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(cacheKey, JSON.stringify(flow));
+        }
+      }
+    } catch (e) {
+      console.error("AI flow synthesis error:", e);
+      try {
+        const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
+        setDynamicNetworkFlow(flow);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(cacheKey, JSON.stringify(flow));
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback synthesis error:", fallbackErr);
+      }
+    } finally {
+      setIsAiSynthesizing(false);
+    }
+  };
+
+  // Synthesize AI Topology and Hybrid Strategy on signal/mode change (checks cache first)
+  useEffect(() => {
+    refreshAiSimulation(false);
   }, [currentSignal.id, currentSignal.location, currentSignal.facility, dataMode]);
 
   // Compute current dynamic scenarios
@@ -459,6 +482,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         activeDisruptedCorridor,
         dynamicNetworkFlow,
         isAiSynthesizing,
+        refreshAiSimulation,
         currentSignal,
         currentScenarios,
         currentStrategy,

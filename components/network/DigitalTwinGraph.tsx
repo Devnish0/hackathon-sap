@@ -16,7 +16,7 @@ import "@xyflow/react/dist/style.css";
 import { CustomNode } from "./CustomNode";
 import networkData from "@/data/network.json";
 import { useResilience } from "@/lib/context/ResilienceContext";
-import { ShieldAlert, X, Sparkles } from "lucide-react";
+import { ShieldAlert, X, Sparkles, RotateCw } from "lucide-react";
 
 const nodeTypes = { custom: CustomNode };
 
@@ -33,6 +33,7 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
     currentSignal,
     dynamicNetworkFlow,
     isAiSynthesizing,
+    refreshAiSimulation,
   } = useResilience();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(disruptedNodeId || "PORT-01");
 
@@ -207,10 +208,20 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
               AI Synthesizing Flow...
             </span>
           ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
-            <span className="badge badge-primary badge-xs font-mono gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-primary-content" />
-              {dynamicNetworkFlow.aiGenerated ? "GEMINI 1.5 TOPOLOGY" : "AI ADAPTIVE FLOW"}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="badge badge-primary badge-xs font-mono gap-1">
+                <Sparkles className="w-2.5 h-2.5 text-primary-content" />
+                {dynamicNetworkFlow.aiGenerated ? "GEMINI 3.6 TOPOLOGY" : "AI ADAPTIVE FLOW"}
+              </span>
+              <button
+                onClick={() => refreshAiSimulation(true)}
+                disabled={isAiSynthesizing}
+                title="Hard reload topology from Gemini AI"
+                className="btn btn-ghost btn-xs px-1 h-5 min-h-0 text-base-content/50 hover:text-primary"
+              >
+                <RotateCw className={`w-2.5 h-2.5 ${isAiSynthesizing ? "animate-spin text-primary" : ""}`} />
+              </button>
+            </div>
           ) : null}
           <div className="hidden sm:flex items-center gap-3">
             <div className="flex items-center gap-1"><span className="badge badge-success badge-xs" /><span>OK</span></div>

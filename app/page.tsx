@@ -22,6 +22,7 @@ import {
   Anchor,
   Cpu,
   CloudLightning,
+  RotateCw,
 } from "lucide-react";
 
 export default function ControlTowerPage() {
@@ -36,6 +37,7 @@ export default function ControlTowerPage() {
     currentPlanPoints,
     dynamicNetworkFlow,
     isAiSynthesizing,
+    refreshAiSimulation,
     activeMockSuite,
     setActiveMockSuiteId,
     availableMockSuites,
@@ -207,19 +209,33 @@ export default function ControlTowerPage() {
                     Next-Best Action
                   </span>
                 </div>
-                {isAiSynthesizing ? (
-                  <span className="badge badge-warning badge-sm font-mono font-bold gap-1 animate-pulse">
-                    <span className="loading loading-spinner loading-xs" />
-                    AI Synthesizing...
-                  </span>
-                ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
-                  <span className="badge badge-accent badge-sm font-mono font-bold gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {dynamicNetworkFlow.aiGenerated ? "GEMINI AI PLAYBOOK" : "AI ADAPTIVE PLAYBOOK"}
-                  </span>
-                ) : (
-                  <span className="badge badge-primary badge-sm font-mono font-bold">#1 RANKED PLAYBOOK</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {isAiSynthesizing ? (
+                    <span className="badge badge-warning badge-sm font-mono font-bold gap-1 animate-pulse">
+                      <span className="loading loading-spinner loading-xs" />
+                      AI Synthesizing...
+                    </span>
+                  ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
+                    <span className="badge badge-accent badge-sm font-mono font-bold gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {dynamicNetworkFlow.aiGenerated ? "GEMINI AI PLAYBOOK" : "AI ADAPTIVE PLAYBOOK"}
+                    </span>
+                  ) : (
+                    <span className="badge badge-primary badge-sm font-mono font-bold">#1 RANKED PLAYBOOK</span>
+                  )}
+
+                  {dataMode === "REAL_TIME" && (
+                    <button
+                      onClick={() => refreshAiSimulation(true)}
+                      disabled={isAiSynthesizing}
+                      title="Hard reload from Gemini AI (bypasses cache)"
+                      className="btn btn-ghost btn-xs font-mono gap-1 text-base-content/60 hover:text-primary border border-base-300 hover:border-primary/40 px-2"
+                    >
+                      <RotateCw className={`w-3 h-3 ${isAiSynthesizing ? "animate-spin text-primary" : ""}`} />
+                      <span className="text-[10px]">Fetch Again</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Strategy Name & Rationale */}

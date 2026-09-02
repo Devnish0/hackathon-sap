@@ -15,11 +15,13 @@ import {
   RotateCcw,
   Zap,
   Sparkles,
+  RotateCw,
 } from "lucide-react";
 
 export default function DecisionsPage() {
   const {
     systemMode,
+    dataMode,
     networkHealth,
     executeRecovery,
     isRecovering,
@@ -28,6 +30,8 @@ export default function DecisionsPage() {
     triggerLiveDisruption,
     currentStrategy,
     currentPlanPoints,
+    isAiSynthesizing,
+    refreshAiSimulation,
   } = useResilience();
 
   const primaryStrategy = currentStrategy || strategiesData[0];
@@ -55,6 +59,17 @@ export default function DecisionsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          {dataMode === "REAL_TIME" && (
+            <button
+              onClick={() => refreshAiSimulation(true)}
+              disabled={isAiSynthesizing}
+              title="Hard reload from Gemini AI (bypasses cache)"
+              className="btn btn-ghost btn-sm gap-1.5 font-mono text-xs border border-base-300 hover:border-primary/40"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isAiSynthesizing ? "animate-spin text-primary" : ""}`} />
+              <span>{isAiSynthesizing ? "Synthesizing..." : "Refetch AI"}</span>
+            </button>
+          )}
           <button onClick={resetToRehearsal} className="btn btn-ghost btn-sm gap-1 font-mono text-xs">
             <RotateCcw className="w-3.5 h-3.5" /> Reset
           </button>
