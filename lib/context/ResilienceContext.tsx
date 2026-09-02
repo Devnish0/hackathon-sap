@@ -189,32 +189,53 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const triggerLiveDisruption = (customDisruption?: any) => {
     let health = 48;
 
-    if (customDisruption && customDisruption.title) {
-      // Triggered from OSINT World Map or external feed
+    if (customDisruption && (customDisruption.id || customDisruption.rawText || customDisruption.title)) {
+      // Handles both Signals page EnhancedSignal and OSINT hotspots
       const enhanced: EnhancedSignal = {
-        id: customDisruption.id ? `SIG-${customDisruption.id}` : "SIG-OSINT-LIVE",
-        timestamp: new Date().toISOString(),
-        source: customDisruption.source || "OSINT Global Maritime Reconnaissance",
-        rawText: customDisruption.summary || `${customDisruption.title}. Maritime traffic severely restricted across ${customDisruption.chokePoint || customDisruption.locationName}.`,
+        id: customDisruption.id || "SIG-LIVE-ESCALATED",
+        timestamp: customDisruption.timestamp || new Date().toISOString(),
+        source: customDisruption.source || "External Intelligence Telemetry",
+        rawText:
+          customDisruption.rawText ||
+          customDisruption.summary ||
+          `${customDisruption.title || "External shock"} reported. Active supply corridor disruption.`,
         eventType: (customDisruption.eventType as any) || "PORT_DISRUPTION",
-        location: customDisruption.locationName || "Strategic Maritime Gateway",
-        facility: customDisruption.chokePoint || customDisruption.facility || "Active Sea Corridor",
-        expectedDuration: customDisruption.severity === "CRITICAL" ? 120 : 48,
-        durationUnit: "hours",
+        location: customDisruption.location || customDisruption.locationName || "Strategic Maritime Gateway",
+        facility: customDisruption.facility || customDisruption.chokePoint || "Active Inbound Corridor",
+        expectedDuration:
+          customDisruption.expectedDuration ||
+          (customDisruption.severity === "CRITICAL" ? 120 : 48),
+        durationUnit: customDisruption.durationUnit || "hours",
         severity: (customDisruption.severity as any) || "HIGH",
-        confidence: 0.94,
+        confidence: customDisruption.confidence || 0.94,
         validationStatus: "CONFIRMED",
-        corroboratingSources: 4,
+        corroboratingSources: customDisruption.corroboratingSources || 4,
         rehearsalTriggered: true,
-        sourceCategory: customDisruption.category === "PORT" ? "Portcast" : customDisruption.category === "GEOPOLITICAL" ? "gCaptain" : "OpenWeather",
-        primaryAgent: "Sensing",
+        sourceCategory:
+          customDisruption.sourceCategory ||
+          (customDisruption.category === "PORT"
+            ? "Portcast"
+            : customDisruption.category === "GEOPOLITICAL"
+            ? "gCaptain"
+            : "OpenWeather"),
+        primaryAgent: customDisruption.primaryAgent || "Sensing",
         isRealTime: true,
       };
 
       setActiveRealTimeSignal(enhanced);
       setDataMode("REAL_TIME");
-      setActiveDisruptedCorridor(customDisruption.chokePoint || customDisruption.title);
-      health = customDisruption.severity === "CRITICAL" ? 36 : customDisruption.severity === "HIGH" ? 44 : 54;
+      setActiveDisruptedCorridor(
+        customDisruption.facility ||
+          customDisruption.chokePoint ||
+          customDisruption.location ||
+          customDisruption.title
+      );
+      health =
+        customDisruption.severity === "CRITICAL"
+          ? 36
+          : customDisruption.severity === "HIGH"
+          ? 44
+          : 54;
     } else {
       health = activeMockSuite.initialHealth;
       setActiveDisruptedCorridor("Shanghai Deepwater Corridor");

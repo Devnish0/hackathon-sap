@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useResilience } from "@/lib/context/ResilienceContext";
 import { EnhancedSignal, SignalSourceType } from "@/lib/signals/multiSource";
 import { GeminiAnalysisResult } from "@/lib/ai/gemini";
@@ -19,12 +21,15 @@ import {
 } from "lucide-react";
 
 export default function SignalsPage() {
-  const { dataMode, setDataMode, triggerLiveDisruption } = useResilience();
+  const router = useRouter();
+  const { dataMode, setDataMode, triggerLiveDisruption, systemMode, activeRealTimeSignal } =
+    useResilience();
   const [signals, setSignals] = useState<EnhancedSignal[]>([]);
   const [selectedSignalId, setSelectedSignalId] = useState<string>("");
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>("ALL");
   const [activeSourcesMap, setActiveSourcesMap] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isTriggering, setIsTriggering] = useState<boolean>(false);
 
   // Gemini AI Analysis State
   const [geminiApiKey, setGeminiApiKey] = useState<string>("");
@@ -113,6 +118,22 @@ export default function SignalsPage() {
         return "badge-ghost";
     }
   };
+
+  const handleTriggerStressTest = () => {
+    if (!selectedSignal) return;
+    setIsTriggering(true);
+    triggerLiveDisruption(selectedSignal);
+    setTimeout(() => {
+      router.push("/?escalated=true");
+    }, 450);
+  };
+
+  const isSignalActiveDisruption =
+    systemMode === "LIVE_DISRUPTION" &&
+    activeRealTimeSignal &&
+    selectedSignal &&
+    (activeRealTimeSignal.id === selectedSignal.id ||
+      activeRealTimeSignal.location === selectedSignal.location);
 
   return (
     <div className="flex-1 p-4 md:p-6 space-y-5 max-w-[1720px] mx-auto w-full">
@@ -500,17 +521,47 @@ export default function SignalsPage() {
                 </div>
 
                 {/* Bottom Escalation Action */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-base-200">
-                  <div className="text-xs text-base-content/50 font-sans">
-                    Validated event can now be escalated to multi-horizon continuous rehearsal.
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-base-200">
+                  <div className="text-xs text-base-content/60 font-sans">
+                    {isSignalActiveDisruption ? (
+                      <span className="text-error font-bold flex items-center gap-1.5 font-mono">
+                        <ShieldAlert className="w-4 h-4 animate-pulse shrink-0" />
+                        Disruption Stress Test Active in Digital Twin & Control Tower
+                      </span>
+                    ) : (
+                      "Validated real-world signal ready for multi-horizon stress rehearsal."
+                    )}
                   </div>
-                  <button
-                    onClick={triggerLiveDisruption}
-                    className="btn btn-error btn-outline btn-sm font-mono gap-1.5"
-                  >
-                    <ShieldAlert className="w-3.5 h-3.5" />
-                    <span>Trigger Disruption Stress Test →</span>
-                  </button>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isSignalActiveDisruption ? (
+                      <Link
+                        href="/"
+                        className="btn btn-error btn-sm font-mono gap-1.5 shadow-sm"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 animate-pulse" />
+                        <span>Inspect in Control Tower →</span>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={handleTriggerStressTest}
+                        disabled={isTriggering}
+                        className="btn btn-error btn-sm font-mono gap-1.5 shadow-sm"
+                      >
+                        {isTriggering ? (
+                          <>
+                            <span className="loading loading-spinner loading-xs" />
+                            <span>Escalating to Rehearsal...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                            <span>Trigger Disruption Stress Test →</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
