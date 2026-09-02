@@ -1,0 +1,47 @@
+[
+  {
+    "id": "SUP-01",
+    "name": "Shanghai Micro-Precision Semi",
+    "country": "China",
+    "city": "Shanghai",
+    "category": "Microcontrollers & Power ICs",
+    "capacityUnitsPerMonth": 45000,
+    "currentUtilization": 92,
+    "leadTimeDays": 14,
+    "reliabilityScore": 0.98,
+    "unitCostINR": 4200,
+    "contractTerms": "FOB Shanghai",
+    "riskLevel": "CRITICAL",
+    "status": "AFFECTED_BY_PORT_CLOSURE"
+  },
+  {
+    "id": "SUP-02",
+    "name": "Monterrey Advanced Substrates",
+    "country": "Mexico",
+    "city": "Nuevo León",
+    "category": "Electronic Substrates & Wiring",
+    "capacityUnitsPerMonth": 30000,
+    "currentUtilization": 64,
+    "leadTimeDays": 6,
+    "reliabilityScore": 0.94,
+    "unitCostINR": 4650,
+    "contractTerms": "USMCA Compliant DDP",
+    "riskLevel": "LOW",
+    "status": "ACTIVE_EXPANDABLE"
+  },
+  {
+    "id": "SUP-03",
+    "name": "Midwest Industrial Semi & Dynamics",
+    "country": "United States",
+    "city": "Detroit",
+    "category": "Precision Silicon & Sensors",
+    "capacityUnitsPerMonth": 20000,
+    "currentUtilization": 40,
+    "leadTimeDays": 3,
+    "reliabilityScore": 0.99,
+    "unitCostINR": 5400,
+    "contractTerms": "Domestic Master Agreement",
+    "riskLevel": "VERY_LOW",
+    "status": "RESERVE_CAPACITY_AVAILABLE"
+  }
+]

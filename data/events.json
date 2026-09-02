@@ -1,0 +1,50 @@
+[
+  {
+    "id": "SIG-02481",
+    "timestamp": "2026-09-02T17:42:08Z",
+    "source": "East Asia Maritime Bureau Telemetry + Lloyd's Intelligence Feed",
+    "rawText": "Urgent advisory: Port of Shanghai Yangshan Terminal reports technical crane network desynchronization and tidal berth lock. Vessel berthing paused. Initial estimate 2-4 hours, potential labor union staging.",
+    "eventType": "PORT_DISRUPTION",
+    "location": "Shanghai",
+    "facility": "Port of Shanghai (CNSHG) - Yangshan Deepwater Terminal",
+    "expectedDuration": 2,
+    "durationUnit": "hours",
+    "severity": "MODERATE",
+    "confidence": 0.84,
+    "validationStatus": "CONFIRMED",
+    "corroboratingSources": 4,
+    "rehearsalTriggered": true
+  },
+  {
+    "id": "SIG-02480",
+    "timestamp": "2026-09-02T16:15:22Z",
+    "source": "USTR Federal Register Monitor",
+    "rawText": "Notice of modification of actions regarding Section 301 tariff exclusions for specific semiconductor substrate components originating in East Asian ports.",
+    "eventType": "TRADE_POLICY",
+    "location": "Washington / East Asia",
+    "facility": "Cross-Border Regulatory Customs",
+    "expectedDuration": 30,
+    "durationUnit": "days",
+    "severity": "LOW",
+    "confidence": 0.96,
+    "validationStatus": "CONFIRMED",
+    "corroboratingSources": 2,
+    "rehearsalTriggered": false
+  },
+  {
+    "id": "SIG-02479",
+    "timestamp": "2026-09-02T14:02:11Z",
+    "source": "NOAA Typhoon Warning Network",
+    "rawText": "Tropical Storm 14W tracking north-northwest across East China Sea; minor wind restrictions expected at Ningbo-Zhoushan port approach.",
+    "eventType": "WEATHER_EVENT",
+    "location": "Ningbo, CN",
+    "facility": "Ningbo Port Approaches",
+    "expectedDuration": 18,
+    "durationUnit": "hours",
+    "severity": "LOW",
+    "confidence": 0.78,
+    "validationStatus": "CORRELATED",
+    "corroboratingSources": 3,
+    "rehearsalTriggered": false
+  }
+]

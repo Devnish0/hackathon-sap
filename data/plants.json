@@ -1,0 +1,26 @@
+[
+  {
+    "id": "PLANT-01",
+    "name": "Detroit Assembly Complex",
+    "location": "Detroit, MI, USA",
+    "primaryProduct": "Automotive Telematics & Powertrain Controllers",
+    "weeklyAssemblyCapacity": 2400,
+    "currentOutputRate": 2350,
+    "bufferStockDays": 6.2,
+    "criticalComponentStockoutHours": 148,
+    "downtimeCostPerHourINR": 850000,
+    "dependentCustomers": ["CUST-01"]
+  },
+  {
+    "id": "PLANT-02",
+    "name": "Monterrey Module Integration Facility",
+    "location": "Monterrey, Mexico",
+    "primaryProduct": "Sub-assembly Harness & Sensor Packs",
+    "weeklyAssemblyCapacity": 4000,
+    "currentOutputRate": 3600,
+    "bufferStockDays": 14.5,
+    "criticalComponentStockoutHours": 340,
+    "downtimeCostPerHourINR": 320000,
+    "dependentCustomers": ["PLANT-01"]
+  }
+]
