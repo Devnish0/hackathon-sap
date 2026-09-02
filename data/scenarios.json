@@ -1,0 +1,70 @@
+[
+  {
+    "id": "SCEN-2H",
+    "durationHours": 2,
+    "label": "2 HOURS",
+    "closureProbability": 0.88,
+    "affectedShipments": 1,
+    "revenueExposure": 0.4,
+    "inventoryDaysRemaining": 6.2,
+    "serviceLevelImpact": 99.1,
+    "recoveryTimeDays": 1,
+    "compoundRisks": {
+      "alternatePortCongestion": false,
+      "supplierShortage": false,
+      "demandSpike": false
+    },
+    "narrative": "Tidal crane delay at Yangshan terminal. Stalled vessel Ever Vanguard expected to clear within evening window. Buffer stock at Midwest staging absorbed without plant disruption."
+  },
+  {
+    "id": "SCEN-24H",
+    "durationHours": 24,
+    "label": "24 HOURS",
+    "closureProbability": 0.54,
+    "affectedShipments": 3,
+    "revenueExposure": 3.2,
+    "inventoryDaysRemaining": 5.1,
+    "serviceLevelImpact": 96.4,
+    "recoveryTimeDays": 4,
+    "compoundRisks": {
+      "alternatePortCongestion": false,
+      "supplierShortage": false,
+      "demandSpike": false
+    },
+    "narrative": "Port berth lock extends into full-day demurrage. 3 container feeder vessels delayed. Safety buffers in Chicago warehouse decrease to 5 days; inventory redistribution recommended."
+  },
+  {
+    "id": "SCEN-7D",
+    "durationHours": 168,
+    "label": "7 DAYS",
+    "closureProbability": 0.28,
+    "affectedShipments": 9,
+    "revenueExposure": 18.7,
+    "inventoryDaysRemaining": 1.4,
+    "serviceLevelImpact": 78.2,
+    "recoveryTimeDays": 12,
+    "compoundRisks": {
+      "alternatePortCongestion": true,
+      "supplierShortage": true,
+      "demandSpike": false
+    },
+    "narrative": "Prolonged port shutdown triggers severe congestion spilling over to Ningbo and Busan. Detroit assembly faces assembly line downtime within 148 hours unless sourcing shifts execute."
+  },
+  {
+    "id": "SCEN-PERM",
+    "durationHours": 720,
+    "label": "PERMANENT",
+    "closureProbability": 0.08,
+    "affectedShipments": 24,
+    "revenueExposure": 64.2,
+    "inventoryDaysRemaining": 0.0,
+    "serviceLevelImpact": 42.0,
+    "recoveryTimeDays": 45,
+    "compoundRisks": {
+      "alternatePortCongestion": true,
+      "supplierShortage": true,
+      "demandSpike": true
+    },
+    "narrative": "Complete structural trade route embargo or critical infrastructure failure. Sourcing must immediately be transferred 100% to nearshore Americas/domestic network."
+  }
+]

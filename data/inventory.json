@@ -1,0 +1,35 @@
+[
+  {
+    "id": "INV-01",
+    "facility": "Midwest Central Staging Hub",
+    "location": "Chicago, IL, USA",
+    "currentUnits": 5200,
+    "safetyStockUnits": 4000,
+    "dailyBurnRate": 840,
+    "daysRemaining": 6.2,
+    "status": "AT_RISK",
+    "redistributionCapacityMax": 2000
+  },
+  {
+    "id": "INV-02",
+    "facility": "Texas Buffer Warehouse",
+    "location": "Dallas, TX, USA",
+    "currentUnits": 14200,
+    "safetyStockUnits": 6000,
+    "dailyBurnRate": 450,
+    "daysRemaining": 31.5,
+    "status": "HEALTHY_SURPLUS",
+    "redistributionCapacityMax": 4500
+  },
+  {
+    "id": "INV-03",
+    "facility": "Long Beach Port Staging Facility",
+    "location": "Long Beach, CA, USA",
+    "currentUnits": 1800,
+    "safetyStockUnits": 2500,
+    "dailyBurnRate": 360,
+    "daysRemaining": 5.0,
+    "status": "DEPLETING",
+    "redistributionCapacityMax": 1000
+  }
+]

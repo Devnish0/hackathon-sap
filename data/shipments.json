@@ -1,0 +1,41 @@
+[
+  {
+    "id": "SHP-8821",
+    "vessel": "Ever Vanguard",
+    "originPort": "Port of Shanghai (CNSHG)",
+    "destinationPort": "Port of Long Beach (USLGB)",
+    "cargoDescription": "12,000 Next-Gen Automotive ECU Modules",
+    "cargoValueINR": 68000000,
+    "etd": "2026-09-02T14:00:00Z",
+    "eta": "2026-09-16T18:00:00Z",
+    "status": "STALLED_AT_BERTH",
+    "delayHours": 48,
+    "riskLevel": "CRITICAL"
+  },
+  {
+    "id": "SHP-8824",
+    "vessel": "CMA CGM Marco Polo",
+    "originPort": "Port of Shanghai (CNSHG)",
+    "destinationPort": "Port of Rotterdam (NLRTM)",
+    "cargoDescription": "8,500 Sensor Micro-Harnesses",
+    "cargoValueINR": 34000000,
+    "etd": "2026-09-03T02:00:00Z",
+    "eta": "2026-09-28T10:00:00Z",
+    "status": "QUEUED_OUTSIDE_HARBOR",
+    "delayHours": 24,
+    "riskLevel": "HIGH"
+  },
+  {
+    "id": "SHP-8902",
+    "vessel": "Overland Freight Logistics #412",
+    "originPort": "Monterrey Assembly (MX)",
+    "destinationPort": "Detroit Complex (US)",
+    "cargoDescription": "6,000 High-Temp Battery Enclosures",
+    "cargoValueINR": 18000000,
+    "etd": "2026-09-02T08:00:00Z",
+    "eta": "2026-09-04T16:00:00Z",
+    "status": "IN_TRANSIT_ON_SCHEDULE",
+    "delayHours": 0,
+    "riskLevel": "LOW"
+  }
+]

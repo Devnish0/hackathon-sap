@@ -1,0 +1,32 @@
+[
+  {
+    "id": "CUST-01",
+    "name": "Ford Dearborn Assembly Plant",
+    "region": "North America",
+    "weeklyContractRevenueINR": 82000000,
+    "penaltyClausePerDayINR": 12500000,
+    "currentServiceLevel": 99.4,
+    "slaThresholdPercent": 95.0,
+    "criticalParts": ["Automotive Telematics", "ECU Controllers"]
+  },
+  {
+    "id": "CUST-02",
+    "name": "Stellantis Sterling Heights Assembly",
+    "region": "North America",
+    "weeklyContractRevenueINR": 61000000,
+    "penaltyClausePerDayINR": 9800000,
+    "currentServiceLevel": 98.8,
+    "slaThresholdPercent": 94.5,
+    "criticalParts": ["Powertrain Sensors", "Substrate Drivers"]
+  },
+  {
+    "id": "CUST-03",
+    "name": "BMW Spartanburg Operations",
+    "region": "North America",
+    "weeklyContractRevenueINR": 44000000,
+    "penaltyClausePerDayINR": 7500000,
+    "currentServiceLevel": 99.1,
+    "slaThresholdPercent": 96.0,
+    "criticalParts": ["Battery Management Telematics"]
+  }
+]
