@@ -110,12 +110,35 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     async function updateFlow() {
       setIsAiSynthesizing(true);
       try {
-        const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
-        if (!isCancelled) {
-          setDynamicNetworkFlow(flow);
+        // First try server-side endpoint where process.env.GEMINI_API_KEY from .env is loaded
+        const res = await fetch("/api/ai/simulate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signal: currentSignal }),
+        });
+
+        if (res.ok) {
+          const flow = await res.json();
+          if (!isCancelled) {
+            setDynamicNetworkFlow(flow);
+          }
+        } else {
+          // Fallback to local cognitive synthesis
+          const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
+          if (!isCancelled) {
+            setDynamicNetworkFlow(flow);
+          }
         }
       } catch (e) {
         console.error("AI flow synthesis error:", e);
+        try {
+          const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
+          if (!isCancelled) {
+            setDynamicNetworkFlow(flow);
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback synthesis error:", fallbackErr);
+        }
       } finally {
         if (!isCancelled) {
           setIsAiSynthesizing(false);
