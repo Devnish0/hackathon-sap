@@ -30,6 +30,9 @@ interface ResilienceContextType {
   activeRealTimeSignal: EnhancedSignal | null;
   setActiveRealTimeSignal: (signal: EnhancedSignal) => void;
 
+  // Active Disrupted Chokepoint / Corridor (from OSINT or Digital Twin)
+  activeDisruptedCorridor: string | null;
+
   // Dynamic context getters based on active dataMode
   currentSignal: DisruptionSignal;
   currentScenarios: RehearsalScenario[];
@@ -39,7 +42,7 @@ interface ResilienceContextType {
   approvedActions: string[];
   isRecovering: boolean;
   recoveryStep: number;
-  triggerLiveDisruption: () => void;
+  triggerLiveDisruption: (customDisruption?: any) => void;
   resetToRehearsal: () => void;
   executeRecovery: () => void;
 }
@@ -54,6 +57,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   const [approvedActions, setApprovedActions] = useState<string[]>([]);
   const [isRecovering, setIsRecovering] = useState<boolean>(false);
   const [recoveryStep, setRecoveryStep] = useState<number>(0);
+  const [activeDisruptedCorridor, setActiveDisruptedCorridor] = useState<string | null>(null);
 
   // Mock Scenario state
   const [activeMockSuiteId, setActiveMockSuiteId] = useState<string>("MOCK-SHANGHAI");
@@ -72,7 +76,6 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         if (res.ok) {
           const data = await res.json();
           if (data.signals && data.signals.length > 0) {
-            // Find the top real external signal (e.g. gCaptain or Federal Register)
             const realSig = data.signals.find((s: EnhancedSignal) => s.isRealTime) || data.signals[0];
             setActiveRealTimeSignal(realSig);
           }
@@ -151,9 +154,42 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         : "PORT-01"
       : activeMockSuite.disruptedNodeId;
 
-  const triggerLiveDisruption = () => {
+  const triggerLiveDisruption = (customDisruption?: any) => {
+    let health = 48;
+
+    if (customDisruption && customDisruption.title) {
+      // Triggered from OSINT World Map or external feed
+      const enhanced: EnhancedSignal = {
+        id: customDisruption.id ? `SIG-${customDisruption.id}` : "SIG-OSINT-LIVE",
+        timestamp: new Date().toISOString(),
+        source: customDisruption.source || "OSINT Global Maritime Reconnaissance",
+        rawText: customDisruption.summary || `${customDisruption.title}. Maritime traffic severely restricted across ${customDisruption.chokePoint || customDisruption.locationName}.`,
+        eventType: (customDisruption.eventType as any) || "PORT_DISRUPTION",
+        location: customDisruption.locationName || "Strategic Maritime Gateway",
+        facility: customDisruption.chokePoint || customDisruption.facility || "Active Sea Corridor",
+        expectedDuration: customDisruption.severity === "CRITICAL" ? 120 : 48,
+        durationUnit: "hours",
+        severity: (customDisruption.severity as any) || "HIGH",
+        confidence: 0.94,
+        validationStatus: "CONFIRMED",
+        corroboratingSources: 4,
+        rehearsalTriggered: true,
+        sourceCategory: customDisruption.category === "PORT" ? "Portcast" : customDisruption.category === "GEOPOLITICAL" ? "gCaptain" : "OpenWeather",
+        primaryAgent: "Sensing",
+        isRealTime: true,
+      };
+
+      setActiveRealTimeSignal(enhanced);
+      setDataMode("REAL_TIME");
+      setActiveDisruptedCorridor(customDisruption.chokePoint || customDisruption.title);
+      health = customDisruption.severity === "CRITICAL" ? 36 : customDisruption.severity === "HIGH" ? 44 : 54;
+    } else {
+      health = activeMockSuite.initialHealth;
+      setActiveDisruptedCorridor("Shanghai Deepwater Corridor");
+    }
+
     setSystemMode("LIVE_DISRUPTION");
-    setNetworkHealth(activeMockSuite.initialHealth);
+    setNetworkHealth(health);
     setActiveScenarioId("SCEN-24H");
     setApprovedActions([]);
     setIsRecovering(false);
@@ -167,6 +203,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
     setApprovedActions([]);
     setIsRecovering(false);
     setRecoveryStep(0);
+    setActiveDisruptedCorridor(null);
   };
 
   const executeRecovery = () => {
@@ -207,6 +244,7 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         availableMockSuites: MOCK_SCENARIO_SUITES,
         activeRealTimeSignal,
         setActiveRealTimeSignal,
+        activeDisruptedCorridor,
         currentSignal,
         currentScenarios,
         currentStrategy,

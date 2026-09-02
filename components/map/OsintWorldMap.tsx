@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  ArrowRight,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,10 +38,11 @@ interface Hotspot {
   chokePoint: string;
 }
 
-const SHIPPING_ROUTES: { id: string; name: string; coordinates: [number, number][] }[] = [
+const SHIPPING_ROUTES: { id: string; name: string; coordinates: [number, number][]; corridorKey: string }[] = [
   {
     id: "route-pacific",
     name: "Trans-Pacific Great Circle",
+    corridorKey: "Trans-Pacific",
     coordinates: [
       [121.46, 31.22], // Shanghai
       [129.04, 35.10], // Busan
@@ -52,6 +55,7 @@ const SHIPPING_ROUTES: { id: string; name: string; coordinates: [number, number]
   {
     id: "route-suez",
     name: "Asia-Europe Maritime Corridor",
+    corridorKey: "Bab el-Mandeb",
     coordinates: [
       [121.46, 31.22], // Shanghai
       [103.8, 1.3],   // Singapore
@@ -66,6 +70,7 @@ const SHIPPING_ROUTES: { id: string; name: string; coordinates: [number, number]
   {
     id: "route-cape",
     name: "Cape of Good Hope Bypass",
+    corridorKey: "Cape of Good Hope",
     coordinates: [
       [103.8, 1.3],   // Singapore
       [60.0, -10.0],  // Indian Ocean
@@ -78,6 +83,7 @@ const SHIPPING_ROUTES: { id: string; name: string; coordinates: [number, number]
   {
     id: "route-atlantic",
     name: "North Atlantic Corridor",
+    corridorKey: "Atlantic",
     coordinates: [
       [4.4, 51.9],    // Rotterdam
       [-30.0, 48.0],  // Mid Atlantic
@@ -96,7 +102,14 @@ const STRATEGIC_CHOKEPOINTS = [
 ];
 
 export default function OsintWorldMap() {
-  const { triggerLiveDisruption } = useResilience();
+  const {
+    systemMode,
+    networkHealth,
+    activeDisruptedCorridor,
+    triggerLiveDisruption,
+    resetToRehearsal,
+  } = useResilience();
+
   const [selectedHotspotId, setSelectedHotspotId] = useState<string>("OSINT-01");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [showChokePoints, setShowChokePoints] = useState<boolean>(true);
@@ -139,6 +152,19 @@ export default function OsintWorldMap() {
     return (osintHotspots as Hotspot[]).find((h) => h.id === selectedHotspotId) || null;
   }, [selectedHotspotId]);
 
+  const handleSimulateCorridor = (spot: Hotspot) => {
+    triggerLiveDisruption(spot);
+  };
+
+  const isCorridorActive = (spot: Hotspot | null) => {
+    if (!spot || systemMode !== "LIVE_DISRUPTION") return false;
+    return (
+      activeDisruptedCorridor?.toLowerCase().includes(spot.chokePoint.toLowerCase()) ||
+      activeDisruptedCorridor?.toLowerCase().includes(spot.locationName.toLowerCase()) ||
+      activeDisruptedCorridor?.toLowerCase().includes(spot.title.toLowerCase())
+    );
+  };
+
   return (
     <div className="relative w-full bg-base-100 rounded-2xl border border-base-300 overflow-hidden shadow-sm flex flex-col select-none">
       {/* ── Top OSINT Mission Control HUD ── */}
@@ -151,6 +177,11 @@ export default function OsintWorldMap() {
           <span className="badge badge-success badge-xs gap-1 font-mono">
             <span className="animate-ping">●</span> AIS SAT-FEED LIVE
           </span>
+          {systemMode === "LIVE_DISRUPTION" && (
+            <span className="badge badge-error badge-xs font-mono animate-pulse">
+              LIVE DISRUPTION ACTIVE
+            </span>
+          )}
         </div>
 
         {/* Filter Badges */}
@@ -195,6 +226,29 @@ export default function OsintWorldMap() {
 
       {/* ── Map SVG Canvas ── */}
       <div className="relative w-full bg-[#f6f2ee] overflow-hidden" style={{ minHeight: "480px" }}>
+        {/* Top Active Disruption Alert Pill (When Live Disruption is active) */}
+        {systemMode === "LIVE_DISRUPTION" && (
+          <div className="absolute top-3 left-3 z-10">
+            <div role="alert" className="alert alert-error shadow-xl max-w-md py-2 px-3 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 shrink-0 animate-pulse text-error-content" />
+                <div>
+                  <h4 className="font-bold text-xs text-error-content leading-tight">
+                    DISRUPTION: {activeDisruptedCorridor || "Corridor Disrupted"}
+                  </h4>
+                  <p className="text-[10px] text-error-content/80">
+                    Network health at {networkHealth}% · Playbooks mobilized
+                  </p>
+                </div>
+              </div>
+              <Link href="/" className="btn btn-xs btn-neutral font-mono shrink-0 gap-1">
+                <span>Control Tower</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        )}
+
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-auto block"
@@ -231,14 +285,24 @@ export default function OsintWorldMap() {
 
               const pathD = `M ${validPoints.map((p) => `${p[0]},${p[1]}`).join(" L ")}`;
 
+              const isDisruptedLane =
+                systemMode === "LIVE_DISRUPTION" &&
+                activeDisruptedCorridor &&
+                (route.corridorKey.toLowerCase().includes(activeDisruptedCorridor.toLowerCase()) ||
+                  activeDisruptedCorridor.toLowerCase().includes(route.corridorKey.toLowerCase()) ||
+                  (activeDisruptedCorridor.includes("Shanghai") && route.id === "route-pacific") ||
+                  (activeDisruptedCorridor.includes("Bab el-Mandeb") && route.id === "route-suez") ||
+                  (activeDisruptedCorridor.includes("Typhoon") && route.id === "route-pacific"));
+
               return (
-                <g key={route.id} className="opacity-60 hover:opacity-100 transition-opacity">
+                <g key={route.id} className="transition-all">
                   <path
                     d={pathD}
                     fill="none"
-                    stroke="#9ca3af"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
+                    stroke={isDisruptedLane ? "#f87272" : "#9ca3af"}
+                    strokeWidth={isDisruptedLane ? "2.5" : "1.5"}
+                    strokeDasharray={isDisruptedLane ? "6 4" : "4 4"}
+                    className={isDisruptedLane ? "animate-pulse" : "opacity-60 hover:opacity-100"}
                   />
                 </g>
               );
@@ -249,24 +313,38 @@ export default function OsintWorldMap() {
             STRATEGIC_CHOKEPOINTS.map((cp) => {
               const pt = projection(cp.coordinates);
               if (!pt) return null;
+
+              const isDisruptedChoke =
+                systemMode === "LIVE_DISRUPTION" &&
+                activeDisruptedCorridor &&
+                activeDisruptedCorridor.toLowerCase().includes(cp.name.toLowerCase());
+
               return (
                 <g key={cp.name} transform={`translate(${pt[0]}, ${pt[1]})`}>
+                  <rect
+                    x="-3.5"
+                    y="-3.5"
+                    width="7"
+                    height="7"
+                    fill={isDisruptedChoke ? "#f87272" : "#656b69"}
+                    className={isDisruptedChoke ? "animate-ping" : "opacity-70"}
+                    transform="rotate(45)"
+                  />
                   <rect
                     x="-3"
                     y="-3"
                     width="6"
                     height="6"
-                    fill="#656b69"
-                    className="opacity-70"
+                    fill={isDisruptedChoke ? "#f87272" : "#656b69"}
                     transform="rotate(45)"
                   />
                   <text
-                    x="5"
+                    x="6"
                     y="3"
-                    fontSize="7"
+                    fontSize="7.5"
                     fontFamily="monospace"
-                    fill="#656b69"
-                    className="select-none pointer-events-none font-semibold"
+                    fill={isDisruptedChoke ? "#dc2626" : "#4b5563"}
+                    className="select-none pointer-events-none font-bold"
                   >
                     {cp.name}
                   </text>
@@ -280,7 +358,8 @@ export default function OsintWorldMap() {
             if (!pt) return null;
             const isSelected = spot.id === selectedHotspotId;
             const isCritical = spot.severity === "CRITICAL";
-            const color = isCritical ? "#f87272" : spot.severity === "HIGH" ? "#fbbd23" : "#3abff8";
+            const isCurrentDisruption = isCorridorActive(spot);
+            const color = isCurrentDisruption || isCritical ? "#f87272" : spot.severity === "HIGH" ? "#fbbd23" : "#3abff8";
 
             return (
               <g
@@ -291,27 +370,27 @@ export default function OsintWorldMap() {
               >
                 {/* Outer Radar Ping Ring */}
                 <circle
-                  r={isSelected ? "14" : "10"}
+                  r={isCurrentDisruption ? "18" : isSelected ? "14" : "10"}
                   fill={color}
-                  className="animate-ping opacity-30 pointer-events-none"
+                  className="animate-ping opacity-35 pointer-events-none"
                 />
 
                 {/* Focus Ring */}
-                {isSelected && (
+                {(isSelected || isCurrentDisruption) && (
                   <circle
-                    r="12"
+                    r="13"
                     fill="none"
                     stroke={color}
                     strokeWidth="1.5"
                     strokeDasharray="3 2"
                     className="animate-spin pointer-events-none"
-                    style={{ animationDuration: "8s" }}
+                    style={{ animationDuration: "6s" }}
                   />
                 )}
 
                 {/* Center Beacon Dot */}
                 <circle
-                  r={isSelected ? "6" : "4.5"}
+                  r={isSelected || isCurrentDisruption ? "6.5" : "4.5"}
                   fill={color}
                   stroke="#ffffff"
                   strokeWidth="1.5"
@@ -415,14 +494,41 @@ export default function OsintWorldMap() {
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-2 border-t border-base-200 flex flex-col gap-1.5">
-              <button
-                onClick={triggerLiveDisruption}
-                className="btn btn-error btn-sm w-full gap-1 font-mono text-xs shadow-sm"
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>Simulate Corridor Disruption</span>
-              </button>
+            <div className="pt-2 border-t border-base-200 flex flex-col gap-2">
+              {isCorridorActive(selectedHotspot) ? (
+                <div className="space-y-2">
+                  <div role="alert" className="alert alert-error py-2 px-3 text-xs flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 shrink-0 animate-pulse" />
+                    <div>
+                      <div className="font-bold text-xs">Corridor Disruption Active!</div>
+                      <div className="text-[10px]">Impact cascading to Detroit plants</div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/"
+                    className="btn btn-primary btn-sm w-full gap-1.5 font-mono text-xs shadow-sm"
+                  >
+                    <span>Inspect Impact in Control Tower</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    onClick={resetToRehearsal}
+                    className="btn btn-ghost btn-xs w-full font-mono text-[10px] gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset to Baseline</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleSimulateCorridor(selectedHotspot)}
+                  className="btn btn-error btn-sm w-full gap-1.5 font-mono text-xs shadow-sm"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Simulate Corridor Disruption</span>
+                </button>
+              )}
+
               <Link
                 href="/signals"
                 className="btn btn-ghost btn-xs w-full gap-1 font-mono text-primary text-[10px]"
