@@ -117,7 +117,7 @@ Extract structured supply chain intelligence and respond strictly with a valid J
 Output only the JSON object, with no markdown formatting or commentary.`;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${effectiveKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -321,7 +321,7 @@ Respond strictly with a single JSON object matching this exact schema:
 Output only the JSON object with no extra text.`;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${effectiveKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -408,7 +408,7 @@ Output only the JSON object with no extra text.`;
               ],
             },
             aiGenerated: true,
-            modelUsed: "Gemini 1.5 Flash (Live AI)",
+            modelUsed: "Gemini 3.6 Flash (Live AI)",
           };
         }
       }
