@@ -14,6 +14,7 @@ const config: Config = {
         sans: ["var(--font-ibm-plex-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-ibm-plex-mono)", "Menlo", "monospace"],
       },
+<<<<<<< HEAD
       colors: {
         brand: {
           primary: "#0B5ED7",
@@ -28,6 +29,8 @@ const config: Config = {
           error: "#DC2626",
         },
       },
+=======
+>>>>>>> upstream/main
       borderRadius: {
         sm: "2px",
         DEFAULT: "4px",

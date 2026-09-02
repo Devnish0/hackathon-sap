@@ -75,10 +75,14 @@ body {
   font-family: var(--font-ibm-plex-mono), monospace;
 }
 
+<<<<<<< HEAD
 /* ─── Landing Page Utilities ─── */
 .landing-section {
   scroll-margin-top: 5rem;
 }
+=======
+/* ─── React Flow Canvas Overrides (Cupcake Compatible) ─── */
+>>>>>>> upstream/main
 .react-flow__background {
   background-color: transparent !important;
 }

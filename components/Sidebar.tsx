@@ -22,7 +22,11 @@ export default function Sidebar() {
     useResilience();
 
   const navItems = [
+<<<<<<< HEAD
     { href: "/control-tower", label: "Control Tower", icon: LayoutDashboard },
+=======
+    { href: "/", label: "Control Tower", icon: LayoutDashboard },
+>>>>>>> upstream/main
     { href: "/network", label: "Digital Twin", icon: Network },
     { href: "/signals", label: "Signals", icon: Radio },
     { href: "/scenarios", label: "Rehearsals", icon: GitFork },
