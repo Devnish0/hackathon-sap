@@ -27,7 +27,7 @@ export interface DisruptionSignal {
   timestamp: string;
   source: string;
   rawText: string;
-  eventType: "PORT_DISRUPTION" | "TRADE_POLICY" | "SUPPLIER_FORCE_MAJEURE" | "WEATHER_EVENT" | "GEOPOLITICAL";
+  eventType: "PORT_DISRUPTION" | "TRADE_POLICY" | "SUPPLIER_FORCE_MAJEURE" | "WEATHER_EVENT" | "GEOPOLITICAL" | "LOGISTICS_BOTTLENECK";
   location: string;
   facility: string;
   expectedDuration: number;
@@ -37,6 +37,7 @@ export interface DisruptionSignal {
   validationStatus: "PENDING" | "CORRELATED" | "CONFIRMED" | "REJECTED";
   corroboratingSources: number;
   rehearsalTriggered: boolean;
+  sourceCategory?: string;
 }
 
 export interface NetworkNode {

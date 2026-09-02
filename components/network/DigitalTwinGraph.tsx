@@ -26,8 +26,15 @@ interface DigitalTwinGraphProps {
 }
 
 export default function DigitalTwinGraph({ height = "560px", showInspector = true }: DigitalTwinGraphProps) {
-  const { systemMode } = useResilience();
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("PORT-01");
+  const { systemMode, disruptedNodeId, currentSignal } = useResilience();
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(disruptedNodeId || "PORT-01");
+
+  // Keep selected node in sync when disruption changes
+  React.useEffect(() => {
+    if (disruptedNodeId) {
+      setSelectedNodeId(disruptedNodeId);
+    }
+  }, [disruptedNodeId]);
 
   const pipelinePositions: Record<string, { x: number; y: number }> = {
     "SUP-01": { x: 30, y: 70 }, "SUP-02": { x: 30, y: 220 }, "SUP-03": { x: 30, y: 370 },
@@ -40,32 +47,82 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
     return networkData.nodes.map((n) => {
       let status = n.status as "HEALTHY" | "AT_RISK" | "DISRUPTED" | "RECOVERED";
       let health = n.healthScore;
+
+      const isDirectlyDisrupted = n.id === disruptedNodeId;
+      const isDownstreamPlant = (disruptedNodeId === "INV-01" || disruptedNodeId === "PORT-01" || disruptedNodeId === "SUP-01") && n.id === "PLANT-01";
+      const isTransitAffected = (disruptedNodeId === "PORT-01" || disruptedNodeId === "SHP-8821") && n.id === "SHP-8821";
+      const isCustomerAffected = (disruptedNodeId === "INV-01" || disruptedNodeId === "CUST-01") && n.id === "CUST-01";
+
       if (systemMode === "REHEARSAL") {
-        if (n.id === "PORT-01") { status = "DISRUPTED"; health = 68; }
-        else if (n.id === "SHP-8821") { status = "AT_RISK"; health = 70; }
-        else { status = "HEALTHY"; health = 98; }
+        if (isDirectlyDisrupted) {
+          status = "DISRUPTED";
+          health = 68;
+        } else if (isTransitAffected || isDownstreamPlant) {
+          status = "AT_RISK";
+          health = 75;
+        } else {
+          status = "HEALTHY";
+          health = 98;
+        }
       } else if (systemMode === "LIVE_DISRUPTION") {
-        if (n.id === "PORT-01") { status = "DISRUPTED"; health = 22; }
-        else if (n.id === "SHP-8821") { status = "DISRUPTED"; health = 15; }
-        else if (n.id === "PLANT-01") { status = "AT_RISK"; health = 48; }
-        else if (n.id === "INV-01" || n.id === "CUST-01") { status = "AT_RISK"; health = 54; }
-      } else if (systemMode === "RECOVERED") { status = "RECOVERED"; health = 96; }
+        if (isDirectlyDisrupted) {
+          status = "DISRUPTED";
+          health = 18;
+        } else if (isTransitAffected || isDownstreamPlant) {
+          status = "DISRUPTED";
+          health = 32;
+        } else if (isCustomerAffected || n.id === "INV-01") {
+          status = "AT_RISK";
+          health = 48;
+        }
+      } else if (systemMode === "RECOVERED") {
+        status = "RECOVERED";
+        health = 96;
+      }
+
       const pos = pipelinePositions[n.id] || { x: n.coordinates.x, y: n.coordinates.y };
-      return { id: n.id, type: "custom", position: pos, data: { ...n, status, healthScore: health, selected: n.id === selectedNodeId, onSelect: (id: string) => setSelectedNodeId(id) } };
+      return {
+        id: n.id,
+        type: "custom",
+        position: pos,
+        data: {
+          ...n,
+          status,
+          healthScore: health,
+          selected: n.id === selectedNodeId,
+          onSelect: (id: string) => setSelectedNodeId(id),
+        },
+      };
     });
-  }, [systemMode, selectedNodeId]);
+  }, [systemMode, selectedNodeId, disruptedNodeId]);
 
   const initialEdges: Edge[] = useMemo(() => {
     return networkData.edges.map((e) => {
-      const isCritical = e.source === "PORT-01" || e.target === "PORT-01" || e.source === "SHP-8821" || e.target === "SHP-8821" || (systemMode === "LIVE_DISRUPTION" && e.target === "PLANT-01");
+      const isCritical =
+        e.source === disruptedNodeId ||
+        e.target === disruptedNodeId ||
+        (disruptedNodeId === "INV-01" && (e.source === "PLANT-01" || e.target === "CUST-01")) ||
+        (disruptedNodeId === "PORT-01" && (e.source === "PORT-01" || e.target === "PLANT-01"));
+
       let stroke = "#d1d5db";
       let animated = false;
-      if (systemMode === "LIVE_DISRUPTION" && isCritical) { stroke = "#f87272"; animated = true; }
-      else if (systemMode === "RECOVERED") { stroke = "#36d399"; }
-      else if (e.status === "ACTIVE") { stroke = "#b8b4ac"; }
-      return { id: e.id, source: e.source, target: e.target, animated, style: { stroke, strokeWidth: isCritical && systemMode === "LIVE_DISRUPTION" ? 2.5 : 1.5 } };
+      if (systemMode === "LIVE_DISRUPTION" && isCritical) {
+        stroke = "#f87272";
+        animated = true;
+      } else if (systemMode === "RECOVERED") {
+        stroke = "#36d399";
+      } else if (e.status === "ACTIVE") {
+        stroke = "#b8b4ac";
+      }
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        animated,
+        style: { stroke, strokeWidth: isCritical && systemMode === "LIVE_DISRUPTION" ? 2.5 : 1.5 },
+      };
     });
-  }, [systemMode]);
+  }, [systemMode, disruptedNodeId]);
 
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
@@ -87,7 +144,16 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
           {["Suppliers", "Ports", "Transit", "Plants", "Hubs", "OEM"].map((s, i) => (
             <React.Fragment key={s}>
               {i > 0 && <span className="text-base-content/15">→</span>}
-              <span className={systemMode === "LIVE_DISRUPTION" && (i === 1 || i === 2) ? "text-error font-bold" : systemMode === "LIVE_DISRUPTION" && (i === 3 || i === 4) ? "text-warning font-bold" : ""}>{i + 1}. {s}</span>
+              <span className={
+                systemMode === "LIVE_DISRUPTION" && (
+                  (disruptedNodeId === "SUP-01" && i === 0) ||
+                  (disruptedNodeId === "PORT-01" && (i === 1 || i === 2)) ||
+                  (disruptedNodeId === "INV-01" && (i === 3 || i === 4)) ||
+                  (disruptedNodeId === "SHP-8821" && i === 2)
+                ) ? "text-error font-bold" : ""
+              }>
+                {i + 1}. {s}
+              </span>
             </React.Fragment>
           ))}
         </div>
@@ -109,8 +175,10 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
             <div role="alert" className="alert alert-error shadow-lg max-w-sm">
               <ShieldAlert className="w-5 h-5 shrink-0 animate-pulse" />
               <div>
-                <h3 className="font-bold text-sm">Impact Propagating</h3>
-                <div className="text-xs">Shanghai → Ever Vanguard → Detroit (1.4d buffer)</div>
+                <h3 className="font-bold text-sm">Disruption Propagating</h3>
+                <div className="text-xs">
+                  {currentSignal?.facility || "Critical node"} impact cascading through supply chain dependencies
+                </div>
               </div>
             </div>
           </div>
@@ -128,9 +196,28 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
                 <p className="text-xs text-base-content/40 font-mono">{selectedNode.location}</p>
                 <div className="divider my-0" />
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-base-content/40">Health</span><span className={`badge badge-sm font-bold ${selectedNode.healthScore > 75 ? "badge-success" : selectedNode.healthScore > 40 ? "badge-warning" : "badge-error"}`}>{selectedNode.healthScore}%</span></div>
-                  <div className="flex justify-between"><span className="text-base-content/40">Buffer</span><span className="font-medium tabular-data">{selectedNode.daysOfInventory > 0 ? `${selectedNode.daysOfInventory}d` : "Pipeline"}</span></div>
-                  <div className="flex justify-between"><span className="text-base-content/40">Exposure</span><span className="font-bold text-warning tabular-data">₹{selectedNode.financialExposure}Cr</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-base-content/40">Health</span>
+                    <span className={`badge badge-sm font-bold ${
+                      selectedNode.id === disruptedNodeId && systemMode === "LIVE_DISRUPTION"
+                        ? "badge-error"
+                        : selectedNode.healthScore > 75 ? "badge-success" : selectedNode.healthScore > 40 ? "badge-warning" : "badge-error"
+                    }`}>
+                      {selectedNode.id === disruptedNodeId && systemMode === "LIVE_DISRUPTION" ? "18%" : `${selectedNode.healthScore}%`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-base-content/40">Buffer</span>
+                    <span className="font-medium tabular-data">
+                      {selectedNode.id === "INV-01" && disruptedNodeId === "INV-01"
+                        ? "0.0d (DESTROYED)"
+                        : selectedNode.daysOfInventory > 0 ? `${selectedNode.daysOfInventory}d` : "Pipeline"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-base-content/40">Exposure</span>
+                    <span className="font-bold text-warning tabular-data">₹{selectedNode.financialExposure}Cr</span>
+                  </div>
                 </div>
                 <progress className="progress progress-primary w-full h-1.5 mt-2" value={selectedNode.capacityUtilization} max="100" />
               </div>

@@ -4,8 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useResilience } from "@/lib/context/ResilienceContext";
 import DigitalTwinGraph from "@/components/network/DigitalTwinGraph";
-import scenariosData from "@/data/scenarios.json";
-import strategiesData from "@/data/strategies.json";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -17,12 +15,27 @@ import {
   Clock,
   ArrowRight,
   Maximize2,
+  Globe,
+  FlaskConical,
+  Flame,
+  Anchor,
+  Cpu,
+  CloudLightning,
 } from "lucide-react";
 
 export default function ControlTowerPage() {
   const {
     systemMode,
+    dataMode,
+    setDataMode,
     networkHealth,
+    currentSignal,
+    currentScenarios,
+    currentStrategy,
+    activeMockSuite,
+    setActiveMockSuiteId,
+    availableMockSuites,
+    activeRealTimeSignal,
     triggerLiveDisruption,
     resetToRehearsal,
     executeRecovery,
@@ -31,47 +44,108 @@ export default function ControlTowerPage() {
   } = useResilience();
 
   const [selectedHorizon, setSelectedHorizon] = useState<string>("SCEN-24H");
-  const nextBestStrategy = strategiesData[0];
+
+  const currentScenario =
+    currentScenarios.find((s) => s.id === selectedHorizon) || currentScenarios[1] || currentScenarios[0];
 
   const agentStream = [
-    { time: "17:42:08", agent: "SENSING", text: "Port crane desync detected at Yangshan Fairway", color: "text-info" },
-    { time: "17:42:10", agent: "VALIDATION", text: "4 independent feeds correlated — 84% confidence", color: "text-primary" },
-    { time: "17:42:12", agent: "SCENARIO", text: "43 multi-horizon stress trees generated", color: "text-secondary" },
-    { time: "17:42:15", agent: "LOGISTICS", text: "Busan transshipment connector reserved", color: "text-accent" },
-    { time: "17:42:17", agent: "INVENTORY", text: "1,500 units cleared for auto-transfer from Texas", color: "text-success" },
-    { time: "17:42:19", agent: "COMPLIANCE", text: "USMCA origin rules verified (78.4% passing)", color: "text-warning" },
-    { time: "17:42:21", agent: "ORCHESTRATOR", text: "Composite Rank #1 → Hybrid Response selected", color: "text-primary" },
+    { time: "17:42:08", agent: "SENSING", text: `Ingested ${currentSignal.sourceCategory || "External Feed"} incident advisory`, color: "text-info" },
+    { time: "17:42:10", agent: "VALIDATION", text: `Corroborated by ${currentSignal.corroboratingSources || 3}+ independent streams (${(currentSignal.confidence * 100).toFixed(0)}% conf)`, color: "text-primary" },
+    { time: "17:42:12", agent: "SCENARIO", text: `Synthesized 4 multi-horizon stress trees (${currentSignal.location})`, color: "text-secondary" },
+    { time: "17:42:15", agent: "LOGISTICS", text: "Evaluated alternative feeder routings and transport bypasses", color: "text-accent" },
+    { time: "17:42:17", agent: "INVENTORY", text: "Assessed buffer safety thresholds across Midwest distribution centers", color: "text-success" },
+    { time: "17:42:19", agent: "COMPLIANCE", text: "Verified regulatory & USMCA customs rules of origin (PASS)", color: "text-warning" },
+    { time: "17:42:21", agent: "ORCHESTRATOR", text: `Strategy Rank #1: ${currentStrategy.title}`, color: "text-primary" },
   ];
+
+  const mockIcon = (cat: string) => {
+    switch (cat) {
+      case "INVENTORY_DESTROYED":
+        return <Flame className="w-3.5 h-3.5 text-error" />;
+      case "SUPPLIER_OUTAGE":
+        return <Cpu className="w-3.5 h-3.5 text-accent" />;
+      case "WEATHER_DISASTER":
+        return <CloudLightning className="w-3.5 h-3.5 text-warning" />;
+      default:
+        return <Anchor className="w-3.5 h-3.5 text-info" />;
+    }
+  };
 
   return (
     <div className="flex-1 p-6 lg:p-8 space-y-6 max-w-[1780px] mx-auto w-full">
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 1. HERO EVENT HEADER                                              */}
+      {/* 1. MOCK SCENARIO SELECTOR (Active when in Mock Mode)               */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {dataMode === "MOCK_SCENARIO" ? (
+        <div className="card bg-base-100 border border-base-300 p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="w-4 h-4 text-accent" />
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-base-content">
+                Select Benchmark Test Scenario:
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {availableMockSuites.map((suite) => (
+                <button
+                  key={suite.id}
+                  onClick={() => setActiveMockSuiteId(suite.id)}
+                  className={`btn btn-xs font-mono rounded-lg gap-1.5 transition-all ${
+                    activeMockSuite.id === suite.id
+                      ? "btn-accent shadow-sm"
+                      : "btn-ghost border border-base-300"
+                  }`}
+                >
+                  {mockIcon(suite.category)}
+                  <span>{suite.title.split("—")[0].trim()}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="alert alert-info py-2 px-4 shadow-sm text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 shrink-0" />
+            <span>
+              <b>Real-Time Live Feed Active:</b> Ingesting live external signals from gCaptain, Federal Register, OpenWeather, and AISStream. Scenarios are dynamically generated for the real-world signal.
+            </span>
+          </div>
+          <Link href="/signals" className="btn btn-xs btn-ghost underline font-mono">
+            Browse All 8 Feeds →
+          </Link>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 2. DOMINANT HERO EVENT HEADER: STORY & VITALS                      */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        {/* Left: The Story */}
+        {/* Left: What is happening? Where? Severity? */}
         <div className="space-y-2 max-w-2xl">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`badge ${systemMode === "LIVE_DISRUPTION" ? "badge-error" : "badge-warning"} badge-sm font-mono gap-1`}>
               {systemMode === "LIVE_DISRUPTION" && <span className="animate-pulse">●</span>}
               {systemMode === "LIVE_DISRUPTION" ? "CONFIRMED DISRUPTION" : "REHEARSAL ACTIVE"}
             </span>
-            <span className="badge badge-ghost badge-sm font-mono">SIG-02481</span>
-            <span className="text-xs text-base-content/40">84% Confidence · 4 Sources</span>
+            <span className="badge badge-ghost badge-sm font-mono">{currentSignal.id}</span>
+            <span className="badge badge-primary badge-xs font-mono">{currentSignal.sourceCategory || "LIVE FEED"}</span>
+            <span className="text-xs text-base-content/40">
+              {(currentSignal.confidence * 100).toFixed(0)}% Confidence · {currentSignal.corroboratingSources || 4} Sources
+            </span>
           </div>
 
           <h1 className="font-serif text-3xl sm:text-4xl text-base-content tracking-tight leading-tight">
-            Shanghai Port — 2h Berthing Stoppage
+            {dataMode === "MOCK_SCENARIO" ? activeMockSuite.title : `${currentSignal.eventType.replace("_", " ")} — ${currentSignal.location}`}
           </h1>
 
-          <p className="text-sm text-base-content/50 leading-relaxed max-w-xl">
-            Technical crane automation desynchronization at Yangshan Terminal.
-            The system has pre-rehearsed escalation scenarios and prepared recovery playbooks.
+          <p className="text-sm text-base-content/60 leading-relaxed max-w-xl">
+            {currentSignal.rawText}
           </p>
         </div>
 
-        {/* Right: Stats row */}
+        {/* Right: Key Operational Vitals */}
         <div className="stats stats-horizontal shadow border border-base-300 bg-base-100">
           <div className="stat px-5 py-3">
             <div className="stat-title text-[10px] font-mono">Health</div>
@@ -82,13 +156,13 @@ export default function ControlTowerPage() {
           <div className="stat px-5 py-3">
             <div className="stat-title text-[10px] font-mono">Revenue Risk</div>
             <div className="stat-value text-2xl text-error tabular-data">
-              {systemMode === "LIVE_DISRUPTION" ? "₹18.7Cr" : "₹0.4Cr"}
+              ₹{currentScenario?.revenueExposure || 18.7}Cr
             </div>
           </div>
           <div className="stat px-5 py-3">
-            <div className="stat-title text-[10px] font-mono">Detroit Buffer</div>
+            <div className="stat-title text-[10px] font-mono">Buffer Left</div>
             <div className="stat-value text-2xl tabular-data">
-              {systemMode === "LIVE_DISRUPTION" ? "1.4d" : "6.2d"}
+              {currentScenario?.inventoryDaysRemaining !== undefined ? `${currentScenario.inventoryDaysRemaining}d` : "1.4d"}
             </div>
           </div>
           <div className="stat px-5 py-3">
@@ -101,7 +175,7 @@ export default function ControlTowerPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 2. CORE WORKSPACE: DIGITAL TWIN + DECISION CONSOLE                */}
+      {/* 3. CORE WORKSPACE: DIGITAL TWIN + NEXT-BEST ACTION DECISION        */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
@@ -112,6 +186,9 @@ export default function ControlTowerPage() {
               <span className="badge badge-primary badge-xs" />
               <span className="font-mono text-base-content/60 uppercase tracking-wider font-medium">
                 Computational Digital Twin
+              </span>
+              <span className="badge badge-ghost badge-xs font-mono">
+                Disrupted Node: {currentSignal.facility || "Active Corridor"}
               </span>
             </div>
             <Link href="/network" className="btn btn-ghost btn-xs gap-1 font-mono text-primary">
@@ -136,50 +213,46 @@ export default function ControlTowerPage() {
                     Next-Best Action
                   </span>
                 </div>
-                <span className="badge badge-primary badge-sm font-mono">#1 RANKED</span>
+                <span className="badge badge-primary badge-sm font-mono">ORCHESTRATOR #1</span>
               </div>
 
               {/* Strategy Name */}
               <h2 className="font-serif text-xl text-base-content leading-snug">
-                {nextBestStrategy.title}
+                {currentStrategy.title}
               </h2>
-              <p className="text-xs text-base-content/50 leading-relaxed">
-                Move 40% volume to Midwest Semi · Redistribute 1,500 units from Texas · Reroute via Busan
+              <p className="text-xs text-base-content/60 leading-relaxed">
+                {currentStrategy.summary}
               </p>
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-2 gap-3 py-3 border-y border-base-200">
                 <div className="space-y-0.5">
-                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Recovery</div>
+                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Recovery Time</div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-lg font-bold text-primary tabular-data">{nextBestStrategy.recoveryDays}d</span>
+                    <span className="text-lg font-bold text-primary tabular-data">{currentStrategy.recoveryDays} Days</span>
                   </div>
-                  <span className="text-[10px] text-base-content/30">vs 22d status quo</span>
                 </div>
                 <div className="space-y-0.5">
                   <div className="text-[10px] font-mono text-base-content/35 uppercase">Service Level</div>
                   <div className="flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-success" />
-                    <span className="text-lg font-bold text-success tabular-data">{nextBestStrategy.serviceLevelPercent}%</span>
+                    <span className="text-lg font-bold text-success tabular-data">{currentStrategy.serviceLevelPercent}%</span>
                   </div>
-                  <span className="text-[10px] text-base-content/30">Target: &gt;95%</span>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Cost</div>
+                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Action Cost</div>
                   <div className="flex items-center gap-1.5">
                     <TrendingDown className="w-3.5 h-3.5 text-base-content/50" />
-                    <span className="text-lg font-bold tabular-data">{nextBestStrategy.costFormatted}</span>
+                    <span className="text-lg font-bold tabular-data">{currentStrategy.costFormatted}</span>
                   </div>
-                  <span className="text-[10px] text-success">Saves ₹18.7Cr</span>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Gate</div>
+                  <div className="text-[10px] font-mono text-base-content/35 uppercase">Governance Gate</div>
                   <div className="flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                    <span className="text-sm font-bold text-warning">APPROVAL</span>
+                    <span className="text-xs font-bold text-warning">{currentStrategy.autonomyLevel.replace("_", " ")}</span>
                   </div>
-                  <span className="text-[10px] text-base-content/30">Procurement shift</span>
                 </div>
               </div>
 
@@ -189,7 +262,7 @@ export default function ControlTowerPage() {
                   <CheckCircle2 className="w-5 h-5" />
                   <div>
                     <h3 className="font-bold text-sm">Recovery Complete</h3>
-                    <div className="text-xs">Network health restored to 96%</div>
+                    <div className="text-xs">Network restabilized to 96% health</div>
                   </div>
                 </div>
               ) : isRecovering ? (
@@ -197,11 +270,11 @@ export default function ControlTowerPage() {
                   <div role="alert" className="alert alert-warning">
                     <span className="loading loading-spinner loading-xs" />
                     <div>
-                      <h3 className="font-bold text-sm">Executing Recovery...</h3>
+                      <h3 className="font-bold text-sm">Executing Recovery Actions...</h3>
                       <div className="text-xs">
-                        {recoveryStep === 1 && "Dispatching 1,500 units Texas → Chicago..."}
-                        {recoveryStep === 2 && "Rerouting Ever Vanguard to Busan..."}
-                        {recoveryStep >= 3 && "Binding 40% contract to Midwest Semi..."}
+                        {recoveryStep === 1 && "1. Auto-redistributing regional inventory buffers..."}
+                        {recoveryStep === 2 && "2. Rerouting transit corridors and feeder vessels..."}
+                        {recoveryStep >= 3 && "3. Binding reserve supplier contracts & nearshore capacity..."}
                       </div>
                     </div>
                   </div>
@@ -252,25 +325,25 @@ export default function ControlTowerPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 3. SCENARIO REHEARSAL HORIZON                                      */}
+      {/* 4. CONTINUOUS SCENARIO REHEARSAL HORIZONS (2H -> 24H -> 7D -> PERM) */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs text-accent font-bold uppercase tracking-wider">
-              Continuous Rehearsal
+              Continuous Scenario Rehearsal
             </span>
             <span className="text-xs text-base-content/40 italic">
-              "We don't wait for disruption to plan."
+              "We don't wait for disruption to plan. We continuously rehearse it."
             </span>
           </div>
           <Link href="/scenarios" className="btn btn-ghost btn-xs font-mono text-primary gap-1">
-            View All Scenarios <ArrowRight className="w-3 h-3" />
+            Deep-Dive What-If Rehearsals <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {scenariosData.map((scen, idx) => {
+          {currentScenarios.map((scen, idx) => {
             const isSelected = scen.id === selectedHorizon;
             return (
               <div
@@ -288,11 +361,11 @@ export default function ControlTowerPage() {
                       {idx + 1}. {scen.label}
                     </h3>
                     <span className="badge badge-ghost badge-xs font-mono">
-                      {(scen.closureProbability * 100).toFixed(0)}%
+                      {(scen.closureProbability * 100).toFixed(0)}% Risk
                     </span>
                   </div>
 
-                  <p className="text-xs text-base-content/40 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-base-content/50 line-clamp-2 leading-relaxed">
                     {scen.narrative}
                   </p>
 
