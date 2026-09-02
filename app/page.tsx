@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useResilience } from "@/lib/context/ResilienceContext";
 import DigitalTwinGraph from "@/components/network/DigitalTwinGraph";
+import LiveAgentExecutionStream from "@/components/dashboard/LiveAgentExecutionStream";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -48,16 +49,6 @@ export default function ControlTowerPage() {
 
   const currentScenario =
     currentScenarios.find((s) => s.id === selectedHorizon) || currentScenarios[1] || currentScenarios[0];
-
-  const agentStream = [
-    { time: "17:42:08", agent: "SENSING", text: `Ingested ${currentSignal.sourceCategory || "External Feed"} incident advisory`, color: "text-info" },
-    { time: "17:42:10", agent: "VALIDATION", text: `Corroborated by ${currentSignal.corroboratingSources || 3}+ independent streams (${(currentSignal.confidence * 100).toFixed(0)}% conf)`, color: "text-primary" },
-    { time: "17:42:12", agent: "SCENARIO", text: `Synthesized 4 multi-horizon stress trees (${currentSignal.location})`, color: "text-secondary" },
-    { time: "17:42:15", agent: "LOGISTICS", text: "Evaluated alternative feeder routings and transport bypasses", color: "text-accent" },
-    { time: "17:42:17", agent: "INVENTORY", text: "Assessed buffer safety thresholds across Midwest distribution centers", color: "text-success" },
-    { time: "17:42:19", agent: "COMPLIANCE", text: "Verified regulatory & USMCA customs rules of origin (PASS)", color: "text-warning" },
-    { time: "17:42:21", agent: "ORCHESTRATOR", text: `Strategy Rank #1: ${currentStrategy.title}`, color: "text-primary" },
-  ];
 
   const mockIcon = (cat: string) => {
     switch (cat) {
@@ -354,30 +345,13 @@ export default function ControlTowerPage() {
               )}
             </div>
           </div>
-
-          {/* AGENT ACTIVITY STREAM */}
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body p-4 gap-3">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-base-content/50 uppercase tracking-wider font-medium">
-                  Agent Execution Stream
-                </span>
-                <span className="badge badge-ghost badge-xs font-mono">LIVE</span>
-              </div>
-
-              <div className="space-y-2">
-                {agentStream.map((log, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-[11px]">
-                    <span className="font-mono text-base-content/30 shrink-0 tabular-data">{log.time}</span>
-                    <span className={`font-mono font-bold shrink-0 ${log.color}`}>{log.agent}</span>
-                    <span className="text-base-content/60 truncate">{log.text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 4. FULL-WIDTH AGENT DECISION LOOP & STREAMING TERMINAL             */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <LiveAgentExecutionStream />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 4. CONTINUOUS SCENARIO REHEARSAL HORIZONS (2H -> 24H -> 7D -> PERM) */}
