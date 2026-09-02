@@ -16,7 +16,7 @@ import "@xyflow/react/dist/style.css";
 import { CustomNode } from "./CustomNode";
 import networkData from "@/data/network.json";
 import { useResilience } from "@/lib/context/ResilienceContext";
-import { ShieldAlert, X } from "lucide-react";
+import { ShieldAlert, X, Sparkles } from "lucide-react";
 
 const nodeTypes = { custom: CustomNode };
 
@@ -26,7 +26,14 @@ interface DigitalTwinGraphProps {
 }
 
 export default function DigitalTwinGraph({ height = "560px", showInspector = true }: DigitalTwinGraphProps) {
-  const { systemMode, disruptedNodeId, currentSignal } = useResilience();
+  const {
+    systemMode,
+    dataMode,
+    disruptedNodeId,
+    currentSignal,
+    dynamicNetworkFlow,
+    isAiSynthesizing,
+  } = useResilience();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(disruptedNodeId || "PORT-01");
 
   // Keep selected node in sync when disruption changes
@@ -47,6 +54,39 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
     return networkData.nodes.map((n) => {
       let status = n.status as "HEALTHY" | "AT_RISK" | "DISRUPTED" | "RECOVERED";
       let health = n.healthScore;
+      let label = n.label;
+      let location = n.location;
+      let throughputRate = n.throughputRate;
+
+      // Dynamically adapt node parameters from AI-synthesized flow
+      if (dataMode === "REAL_TIME" && dynamicNetworkFlow) {
+        if (n.id === "SUP-01") {
+          label = dynamicNetworkFlow.supplier.primaryName;
+          location = dynamicNetworkFlow.supplier.primaryLocation;
+          throughputRate = dynamicNetworkFlow.supplier.primaryThroughput;
+        } else if (n.id === "SUP-02") {
+          label = dynamicNetworkFlow.supplier.backupName;
+          location = dynamicNetworkFlow.supplier.backupLocation;
+        } else if (n.id === "SUP-03") {
+          label = dynamicNetworkFlow.supplier.domesticName;
+          location = dynamicNetworkFlow.supplier.domesticLocation;
+        } else if (n.id === "PORT-01") {
+          label = dynamicNetworkFlow.ports.disruptedPortName;
+          location = dynamicNetworkFlow.ports.disruptedLocation;
+          throughputRate = dynamicNetworkFlow.ports.disruptedThroughput;
+        } else if (n.id === "PORT-02") {
+          label = dynamicNetworkFlow.ports.backupPortName;
+          location = dynamicNetworkFlow.ports.backupLocation;
+        } else if (n.id === "PORT-03") {
+          label = dynamicNetworkFlow.ports.destinationPortName;
+          location = dynamicNetworkFlow.ports.destinationLocation;
+        } else if (n.id === "SHP-8821") {
+          label = dynamicNetworkFlow.shipment.vesselName;
+        } else if (n.id === "PLANT-01") {
+          label = dynamicNetworkFlow.plant.name;
+          location = dynamicNetworkFlow.plant.location;
+        }
+      }
 
       const isDirectlyDisrupted = n.id === disruptedNodeId;
       const isDownstreamPlant = (disruptedNodeId === "INV-01" || disruptedNodeId === "PORT-01" || disruptedNodeId === "SUP-01") && n.id === "PLANT-01";
@@ -87,6 +127,9 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
         position: pos,
         data: {
           ...n,
+          label,
+          location,
+          throughputRate,
           status,
           healthScore: health,
           selected: n.id === selectedNodeId,
@@ -94,7 +137,7 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
         },
       };
     });
-  }, [systemMode, selectedNodeId, disruptedNodeId]);
+  }, [systemMode, selectedNodeId, disruptedNodeId, dataMode, dynamicNetworkFlow]);
 
   const initialEdges: Edge[] = useMemo(() => {
     return networkData.edges.map((e) => {
@@ -157,10 +200,23 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
             </React.Fragment>
           ))}
         </div>
-        <div className="hidden sm:flex items-center gap-3 text-[10px]">
-          <div className="flex items-center gap-1"><span className="badge badge-success badge-xs" /><span>OK</span></div>
-          <div className="flex items-center gap-1"><span className="badge badge-warning badge-xs" /><span>Risk</span></div>
-          <div className="flex items-center gap-1"><span className="badge badge-error badge-xs" /><span>Down</span></div>
+        <div className="flex items-center gap-3 text-[10px]">
+          {isAiSynthesizing ? (
+            <span className="badge badge-warning badge-xs font-mono gap-1 animate-pulse">
+              <span className="loading loading-spinner loading-xs" />
+              AI Synthesizing Flow...
+            </span>
+          ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
+            <span className="badge badge-primary badge-xs font-mono gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-primary-content" />
+              {dynamicNetworkFlow.aiGenerated ? "GEMINI 1.5 TOPOLOGY" : "AI ADAPTIVE FLOW"}
+            </span>
+          ) : null}
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-1"><span className="badge badge-success badge-xs" /><span>OK</span></div>
+            <div className="flex items-center gap-1"><span className="badge badge-warning badge-xs" /><span>Risk</span></div>
+            <div className="flex items-center gap-1"><span className="badge badge-error badge-xs" /><span>Down</span></div>
+          </div>
         </div>
       </div>
 

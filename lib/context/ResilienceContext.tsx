@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { SystemMode, DisruptionSignal, StrategyOption } from "@/lib/types";
 import {
   MOCK_SCENARIO_SUITES,
@@ -10,6 +10,7 @@ import {
   generateDynamicScenariosForSignal,
 } from "@/lib/simulation/dynamicScenarios";
 import { EnhancedSignal } from "@/lib/signals/multiSource";
+import { DynamicNetworkFlow, synthesizeNetworkFlowAndStrategy } from "@/lib/ai/gemini";
 
 export type DataMode = "REAL_TIME" | "MOCK_SCENARIO";
 
@@ -21,6 +22,10 @@ interface ResilienceContextType {
   networkHealth: number;
   activeScenarioId: string;
   setActiveScenarioId: (id: string) => void;
+
+  // AI-Generated Topology & Flow
+  dynamicNetworkFlow: DynamicNetworkFlow | null;
+  isAiSynthesizing: boolean;
 
   // Mock Scenario Selection
   activeMockSuite: MockScenarioSuite;
@@ -70,6 +75,10 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
   // Real-time signal state
   const [activeRealTimeSignal, setActiveRealTimeSignal] = useState<EnhancedSignal | null>(null);
 
+  // Dynamic AI Flow & Strategy State
+  const [dynamicNetworkFlow, setDynamicNetworkFlow] = useState<DynamicNetworkFlow | null>(null);
+  const [isAiSynthesizing, setIsAiSynthesizing] = useState<boolean>(false);
+
   // Fetch initial top real-time signal on mount
   useEffect(() => {
     async function initRealTime() {
@@ -95,87 +104,214 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
       ? activeRealTimeSignal
       : activeMockSuite.signal;
 
+  // Synthesize AI Topology and Hybrid Strategy whenever currentSignal or mode changes
+  useEffect(() => {
+    let isCancelled = false;
+    async function updateFlow() {
+      setIsAiSynthesizing(true);
+      try {
+        const flow = await synthesizeNetworkFlowAndStrategy(currentSignal);
+        if (!isCancelled) {
+          setDynamicNetworkFlow(flow);
+        }
+      } catch (e) {
+        console.error("AI flow synthesis error:", e);
+      } finally {
+        if (!isCancelled) {
+          setIsAiSynthesizing(false);
+        }
+      }
+    }
+    updateFlow();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSignal.id, currentSignal.location, currentSignal.facility, dataMode]);
+
   // Compute current dynamic scenarios
   const currentScenarios: RehearsalScenario[] =
     dataMode === "REAL_TIME" && activeRealTimeSignal
       ? generateDynamicScenariosForSignal(activeRealTimeSignal)
       : activeMockSuite.scenarios;
 
-  // Compute current dynamic strategy
-  const currentStrategy: StrategyOption = {
-    id: activeMockSuite.recommendedStrategy.id,
-    title: activeMockSuite.recommendedStrategy.title,
-    category: "HYBRID_RESPONSE",
-    summary: activeMockSuite.recommendedStrategy.summary,
-    description: activeMockSuite.recommendedStrategy.summary,
-    costINR: 680000,
-    costFormatted: activeMockSuite.recommendedStrategy.costFormatted,
-    recoveryDays: activeMockSuite.recommendedStrategy.recoveryDays,
-    serviceLevelPercent: activeMockSuite.recommendedStrategy.serviceLevelPercent,
-    risk: activeMockSuite.recommendedStrategy.risk,
-    complianceChecked: true,
-    sustainabilityRating: "MEDIUM",
-    carbonFootprintKg: 4200,
-    score: 92.4,
-    autonomyLevel: activeMockSuite.recommendedStrategy.autonomyLevel,
-    actions: [
-      {
-        id: "ACT-101",
-        description: "Reallocate 1,500 safety stock units to Midwest staging hub",
-        category: "INVENTORY",
-        autoExecEligible: true,
-        risk: "LOW",
-        status: "PENDING",
-      },
-      {
-        id: "ACT-102",
-        description: "Reroute affected inbound maritime shipments to secondary transshipment feeder",
-        category: "LOGISTICS",
-        autoExecEligible: true,
-        risk: "LOW",
-        status: "PENDING",
-      },
-      {
-        id: "ACT-103",
-        description: "Authorize primary production shift and volume commitment to reserve supplier",
-        category: "PROCUREMENT",
-        autoExecEligible: false,
-        risk: "HIGH",
-        status: "REQUIRES_APPROVAL",
-      },
-    ],
-    tradeoffRationale: activeMockSuite.recommendedStrategy.tradeoffRationale,
-  };
+  // Compute current dynamic strategy (driven by AI in Real-Time mode)
+  const currentStrategy: StrategyOption = useMemo(() => {
+    if (dataMode === "MOCK_SCENARIO") {
+      return {
+        id: activeMockSuite.recommendedStrategy.id,
+        title: activeMockSuite.recommendedStrategy.title,
+        category: "HYBRID_RESPONSE",
+        summary: activeMockSuite.recommendedStrategy.summary,
+        description: activeMockSuite.recommendedStrategy.summary,
+        costINR: 680000,
+        costFormatted: activeMockSuite.recommendedStrategy.costFormatted,
+        recoveryDays: activeMockSuite.recommendedStrategy.recoveryDays,
+        serviceLevelPercent: activeMockSuite.recommendedStrategy.serviceLevelPercent,
+        risk: activeMockSuite.recommendedStrategy.risk,
+        complianceChecked: true,
+        sustainabilityRating: "MEDIUM",
+        carbonFootprintKg: 4200,
+        score: 92.4,
+        autonomyLevel: activeMockSuite.recommendedStrategy.autonomyLevel,
+        actions: [
+          {
+            id: "ACT-101",
+            description: "Reallocate 1,500 safety stock units to Midwest staging hub",
+            category: "INVENTORY",
+            autoExecEligible: true,
+            risk: "LOW",
+            status: "PENDING",
+          },
+          {
+            id: "ACT-102",
+            description: "Reroute affected inbound maritime shipments to secondary transshipment feeder",
+            category: "LOGISTICS",
+            autoExecEligible: true,
+            risk: "LOW",
+            status: "PENDING",
+          },
+          {
+            id: "ACT-103",
+            description: "Authorize primary production shift and volume commitment to reserve supplier",
+            category: "PROCUREMENT",
+            autoExecEligible: false,
+            risk: "HIGH",
+            status: "REQUIRES_APPROVAL",
+          },
+        ],
+        tradeoffRationale: activeMockSuite.recommendedStrategy.tradeoffRationale,
+      };
+    }
 
-  const currentPlanPoints: PlanPoint[] =
-    dataMode === "MOCK_SCENARIO"
-      ? activeMockSuite.recommendedStrategy.planPoints
-      : [
+    if (dynamicNetworkFlow) {
+      const hr = dynamicNetworkFlow.hybridResponse;
+      return {
+        id: `STRAT-AI-${currentSignal.id}`,
+        title: hr.title,
+        category: "HYBRID_RESPONSE",
+        summary: hr.summary,
+        description: hr.summary,
+        costINR: 640000,
+        costFormatted: hr.costFormatted,
+        recoveryDays: hr.recoveryDays,
+        serviceLevelPercent: hr.serviceLevelPercent,
+        risk: hr.risk,
+        complianceChecked: true,
+        sustainabilityRating: "MEDIUM",
+        carbonFootprintKg: 3900,
+        score: 93.8,
+        autonomyLevel: hr.autonomyLevel,
+        actions: [
           {
-            step: 1,
-            action: "Buffer Containment: Pre-position Domestic Safety Stock",
-            detail: "Transfers 1,500 reserve units across regional distribution hubs to absorb initial lead-time shock.",
-            gate: "AUTO_EXECUTE",
-            gateLabel: "AUTO EXECUTE",
-            agent: "INVENTORY",
+            id: "ACT-101",
+            description: hr.planPoints[0]?.action || "Buffer reallocation",
+            category: "INVENTORY",
+            autoExecEligible: hr.planPoints[0]?.gate === "AUTO_EXECUTE",
+            risk: "LOW",
+            status: "PENDING",
           },
           {
-            step: 2,
-            action: "Corridor Bypass: Reroute Sea-Freight via Alternate Feeder Hub",
-            detail: "Shifts container manifests to secondary deepwater feeder ports to bypass primary chokepoint queue.",
-            gate: "AUTO_EXECUTE",
-            gateLabel: "AUTO EXECUTE",
-            agent: "LOGISTICS",
+            id: "ACT-102",
+            description: hr.planPoints[1]?.action || "Route bypass",
+            category: "LOGISTICS",
+            autoExecEligible: hr.planPoints[1]?.gate === "AUTO_EXECUTE",
+            risk: "LOW",
+            status: "PENDING",
           },
           {
-            step: 3,
-            action: "Contractual Sourcing Shift: Activate Reserve Supplier Line",
-            detail: "Allocates backup component volume with certified nearshore partner to protect OEM delivery SLA.",
-            gate: "HUMAN_APPROVAL_REQUIRED",
-            gateLabel: "APPROVAL REQUIRED",
-            agent: "PROCUREMENT",
+            id: "ACT-103",
+            description: hr.planPoints[2]?.action || "Supplier commitment",
+            category: "PROCUREMENT",
+            autoExecEligible: hr.planPoints[2]?.gate === "AUTO_EXECUTE",
+            risk: "HIGH",
+            status: "REQUIRES_APPROVAL",
           },
-        ];
+        ],
+        tradeoffRationale: hr.tradeoffRationale,
+      };
+    }
+
+    return {
+      id: "STRAT-DEFAULT",
+      title: `${currentSignal.location.split(",")[0] || "Corridor"} Bypass & Domestic Surge`,
+      category: "HYBRID_RESPONSE",
+      summary: `Reroute priority cargo around ${currentSignal.facility} while activating domestic buffer reallocation.`,
+      description: `Reroute priority cargo around ${currentSignal.facility} while activating domestic buffer reallocation.`,
+      costINR: 680000,
+      costFormatted: "₹6.8L",
+      recoveryDays: 7,
+      serviceLevelPercent: 97,
+      risk: "LOW",
+      complianceChecked: true,
+      sustainabilityRating: "MEDIUM",
+      carbonFootprintKg: 4200,
+      score: 92.4,
+      autonomyLevel: "HUMAN_APPROVAL_REQUIRED",
+      actions: [
+        {
+          id: "ACT-101",
+          description: "Reallocate safety stock units to Midwest staging hub",
+          category: "INVENTORY",
+          autoExecEligible: true,
+          risk: "LOW",
+          status: "PENDING",
+        },
+        {
+          id: "ACT-102",
+          description: "Reroute affected inbound maritime shipments to secondary transshipment feeder",
+          category: "LOGISTICS",
+          autoExecEligible: true,
+          risk: "LOW",
+          status: "PENDING",
+        },
+        {
+          id: "ACT-103",
+          description: "Authorize primary production shift and volume commitment to reserve supplier",
+          category: "PROCUREMENT",
+          autoExecEligible: false,
+          risk: "HIGH",
+          status: "REQUIRES_APPROVAL",
+        },
+      ],
+      tradeoffRationale: `Mitigates ${currentSignal.eventType.replace("_", " ")} shock within capacity constraints, securing 97% delivery SLA.`,
+    };
+  }, [dataMode, activeMockSuite, dynamicNetworkFlow, currentSignal]);
+
+  // Compute current dynamic plan points (driven by AI in Real-Time mode)
+  const currentPlanPoints: PlanPoint[] = useMemo(() => {
+    if (dataMode === "MOCK_SCENARIO") {
+      return activeMockSuite.recommendedStrategy.planPoints;
+    }
+    if (dynamicNetworkFlow) {
+      return dynamicNetworkFlow.hybridResponse.planPoints;
+    }
+    return [
+      {
+        step: 1,
+        action: "Buffer Containment: Pre-position Domestic Safety Stock",
+        detail: "Transfers 1,500 reserve units across regional distribution hubs to absorb initial lead-time shock.",
+        gate: "AUTO_EXECUTE",
+        gateLabel: "AUTO EXECUTE",
+        agent: "INVENTORY",
+      },
+      {
+        step: 2,
+        action: "Corridor Bypass: Reroute Sea-Freight via Alternate Feeder Hub",
+        detail: "Shifts container manifests to secondary deepwater feeder ports to bypass primary chokepoint queue.",
+        gate: "AUTO_EXECUTE",
+        gateLabel: "AUTO EXECUTE",
+        agent: "LOGISTICS",
+      },
+      {
+        step: 3,
+        action: "Contractual Sourcing Shift: Activate Reserve Supplier Line",
+        detail: "Allocates backup component volume with certified nearshore partner to protect OEM delivery SLA.",
+        gate: "HUMAN_APPROVAL_REQUIRED",
+        gateLabel: "APPROVAL REQUIRED",
+        agent: "PROCUREMENT",
+      },
+    ];
+  }, [dataMode, activeMockSuite, dynamicNetworkFlow]);
 
   const disruptedNodeId =
     dataMode === "REAL_TIME" && activeRealTimeSignal
@@ -298,6 +434,8 @@ export function ResilienceProvider({ children }: { children: React.ReactNode }) 
         activeRealTimeSignal,
         setActiveRealTimeSignal,
         activeDisruptedCorridor,
+        dynamicNetworkFlow,
+        isAiSynthesizing,
         currentSignal,
         currentScenarios,
         currentStrategy,

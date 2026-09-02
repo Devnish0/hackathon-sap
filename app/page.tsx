@@ -34,6 +34,8 @@ export default function ControlTowerPage() {
     currentScenarios,
     currentStrategy,
     currentPlanPoints,
+    dynamicNetworkFlow,
+    isAiSynthesizing,
     activeMockSuite,
     setActiveMockSuiteId,
     availableMockSuites,
@@ -205,7 +207,19 @@ export default function ControlTowerPage() {
                     Next-Best Action
                   </span>
                 </div>
-                <span className="badge badge-primary badge-sm font-mono font-bold">#1 RANKED PLAYBOOK</span>
+                {isAiSynthesizing ? (
+                  <span className="badge badge-warning badge-sm font-mono font-bold gap-1 animate-pulse">
+                    <span className="loading loading-spinner loading-xs" />
+                    AI Synthesizing...
+                  </span>
+                ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
+                  <span className="badge badge-accent badge-sm font-mono font-bold gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    {dynamicNetworkFlow.aiGenerated ? "GEMINI AI PLAYBOOK" : "AI ADAPTIVE PLAYBOOK"}
+                  </span>
+                ) : (
+                  <span className="badge badge-primary badge-sm font-mono font-bold">#1 RANKED PLAYBOOK</span>
+                )}
               </div>
 
               {/* Strategy Name & Rationale */}

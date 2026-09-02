@@ -36,6 +36,13 @@ export default function SignalsPage() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [aiAnalysis, setAiAnalysis] = useState<GeminiAnalysisResult | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedKey = localStorage.getItem("GEMINI_API_KEY");
+      if (storedKey) setGeminiApiKey(storedKey);
+    }
+  }, []);
+
   const loadSignals = async () => {
     setIsLoading(true);
     try {
@@ -442,7 +449,13 @@ export default function SignalsPage() {
                           type="password"
                           placeholder="Optional Gemini Key (or leave blank for built-in AI)"
                           value={geminiApiKey}
-                          onChange={(e) => setGeminiApiKey(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setGeminiApiKey(val);
+                            if (typeof window !== "undefined") {
+                              localStorage.setItem("GEMINI_API_KEY", val);
+                            }
+                          }}
                           className="input input-xs input-bordered w-48 font-mono text-[10px]"
                         />
                         <button
