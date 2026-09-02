@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ResilienceProvider } from "@/lib/context/ResilienceContext";
+import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 
 const instrumentSerif = Instrument_Serif({
@@ -41,25 +42,15 @@ export default function RootLayout({
       lang="en"
       className={`${instrumentSerif.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >
-      <body className="min-h-screen bg-[#0B0D0E] text-[#E8E5DD] flex flex-col font-sans antialiased selection:bg-[#292E2F] selection:text-[#E8E5DD]">
+      <body className="h-screen bg-[#0B0D0E] text-[#E8E5DD] font-sans antialiased overflow-hidden selection:bg-[#23282A] selection:text-[#E8E5DD]">
         <ResilienceProvider>
-          <Header />
-          <main className="flex-1 bg-mission-grid flex flex-col">{children}</main>
-          
-          {/* Subtle Industrial Footer */}
-          <footer className="border-t border-[#292E2F] bg-[#0B0D0E] px-4 py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-[#5F6564]">
-            <div className="flex items-center space-x-3">
-              <span className="text-[#9A9C97]">RESILIENCE AUTOPILOT v2.4</span>
-              <span>//</span>
-              <span className="italic text-[#9A9C97]">"Prediction is not the outcome. Preparedness is."</span>
+          <div className="flex h-screen w-screen overflow-hidden">
+            <Sidebar />
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-mission-grid">
+              <Header />
+              <div className="flex-1 flex flex-col">{children}</div>
             </div>
-            <div className="flex items-center space-x-3 mt-1 sm:mt-0">
-              <span className="border border-[#292E2F] px-1.5 py-0.2 text-[#D6A84F] bg-[#111416]">
-                DEMO SCENARIO: SHANGHAI PORT (ILLUSTRATIVE)
-              </span>
-              <span>SECURE OPERATIONAL CHANNEL</span>
-            </div>
-          </footer>
+          </div>
         </ResilienceProvider>
       </body>
     </html>

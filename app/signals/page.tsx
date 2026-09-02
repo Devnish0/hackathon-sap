@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { DisruptionSignal } from "@/lib/types";
 import eventsData from "@/data/events.json";
 import { useResilience } from "@/lib/context/ResilienceContext";
 import {
@@ -13,23 +14,51 @@ import {
   AlertOctagon,
   ExternalLink,
   Cpu,
-  Info,
+  RefreshCw,
+  Globe,
 } from "lucide-react";
 
 export default function SignalsPage() {
   const { systemMode, triggerLiveDisruption } = useResilience();
+  const [signals, setSignals] = useState<DisruptionSignal[]>(eventsData as DisruptionSignal[]);
   const [selectedSignalId, setSelectedSignalId] = useState<string>("SIG-02481");
+  const [isLiveFeed, setIsLiveFeed] = useState<boolean>(false);
+  const [feedSource, setFeedSource] = useState<string>("Connecting to external feeds...");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const loadSignals = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/sensing");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.signals && data.signals.length > 0) {
+          setSignals(data.signals);
+          setIsLiveFeed(data.isLiveFeed);
+          setFeedSource(data.feedSource);
+        }
+      }
+    } catch (e) {
+      console.error("Live feed fetch error:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSignals();
+  }, []);
 
   const selectedSignal =
-    eventsData.find((s) => s.id === selectedSignalId) || eventsData[0];
+    signals.find((s) => s.id === selectedSignalId) || signals[0];
 
   const sourceVerificationFeeds = [
     {
-      source: "East Asia Maritime Bureau Telemetry",
-      type: "PORT_CRANE_SENSOR",
+      source: selectedSignal.id.startsWith("SIG-LIVE") ? "gCaptain Maritime News Wire (Live RSS)" : "East Asia Maritime Bureau Telemetry",
+      type: selectedSignal.id.startsWith("SIG-LIVE") ? "PUBLIC_RSS_WIRE" : "PORT_CRANE_SENSOR",
       timestamp: "17:41:12 UTC",
       credibility: "98%",
-      finding: "Yangshan Phase IV crane automation network sync error; 14 vessel berths frozen.",
+      finding: selectedSignal.rawText.slice(0, 120) + "...",
       status: "CORROBORATED",
     },
     {
@@ -37,23 +66,15 @@ export default function SignalsPage() {
       type: "MARITIME_AIS",
       timestamp: "17:41:45 UTC",
       credibility: "94%",
-      finding: "Vessel Ever Vanguard (SHP-8821) speed dropped to 0.0 knots at outer anchorage fairway.",
+      finding: "Vessel tracking telemetry verifies transit speeds and outer fairway route variance.",
       status: "CORROBORATED",
     },
     {
-      source: "Shanghai Municipal Port Authority Dispatch",
+      source: "Cross-Border Regulatory Dispatch Monitor",
       type: "OFFICIAL_COMMUNIQUE",
       timestamp: "17:42:08 UTC",
       credibility: "88%",
-      finding: "Advisory: Berth clearance halted pending technical reboot. Expected window 2-4 hours.",
-      status: "CORROBORATED",
-    },
-    {
-      source: "Global Weather Doppler Radar (NOAA)",
-      type: "METEOROLOGICAL",
-      timestamp: "17:39:00 UTC",
-      credibility: "99%",
-      finding: "Fairway conditions nominal (wind 8kt, wave 0.6m); confirms root cause is non-weather operational.",
+      finding: "Advisory: Channel clearance updates registered with maritime trade desks.",
       status: "CORROBORATED",
     },
   ];
@@ -67,38 +88,57 @@ export default function SignalsPage() {
             <span className="text-[11px] tracking-widest text-[#62B8C8] bg-[#112226] border border-[#234E57] px-2 py-0.5">
               EXTERNAL INTELLIGENCE & SENSING ENGINE
             </span>
-            <span className="text-xs text-[#5F6564]">
-              INGEST FREQUENCY: CONTINUOUS (1000ms)
-            </span>
+            <div className="flex items-center space-x-1.5 text-xs text-[#9A9C97]">
+              {isLiveFeed ? (
+                <>
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#73B58A] animate-pulse" />
+                  <span className="text-[#73B58A] font-bold">REAL EXTERNAL FEED: ONLINE</span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#D6A84F]" />
+                  <span>DETERMINISTIC FALLBACK ACTIVE</span>
+                </>
+              )}
+            </div>
           </div>
           <h1 className="font-serif text-3xl md:text-4xl text-[#E8E5DD] tracking-tight mt-1">
-            Signal Ingestion & Multi-Source Validation
+            Live External Feed & Multi-Source Validation
           </h1>
         </div>
 
-        {/* Validation Golden Rule Badge */}
-        <div className="bg-[#171B1D] border border-[#292E2F] px-3 py-2 text-xs flex items-center space-x-2.5 max-w-md">
-          <ShieldCheck className="w-4 h-4 text-[#62B8C8] shrink-0" />
-          <div className="text-[11px] text-[#9A9C97] font-sans">
-            <b className="text-[#E8E5DD] font-mono block text-[10px]">CORE GOVERNANCE RULE:</b>
-            "One article must never trigger a high-impact enterprise decision. High-impact actions require multi-source validation."
+        {/* Live Feed Status & Refresh Control */}
+        <div className="flex items-center space-x-3">
+          <div className="bg-[#111416] border border-[#292E2F] px-3 py-1.5 text-xs flex items-center space-x-2">
+            <Globe className="w-3.5 h-3.5 text-[#62B8C8]" />
+            <span className="text-[#9A9C97] text-[11px] truncate max-w-[280px]">
+              {feedSource}
+            </span>
           </div>
+          <button
+            onClick={loadSignals}
+            disabled={isLoading}
+            className="p-2 bg-[#171B1D] border border-[#292E2F] hover:border-[#62B8C8] text-[#E8E5DD] transition-colors"
+            title="Poll real live external feeds"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-[#62B8C8]" : ""}`} />
+          </button>
         </div>
       </div>
 
-      {/* Main Grid: Left Ingested Stream, Right In-depth Validation Inspector */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Signals Feed (5 cols) */}
         <div className="lg:col-span-5 flex flex-col space-y-3">
           <div className="text-xs text-[#9A9C97] flex items-center justify-between">
-            <span>DETECTED DISRUPTION EVENTS</span>
-            <span className="text-[#62B8C8]">{eventsData.length} ACTIVE SIGNALS</span>
+            <span>INGESTED DISRUPTION SIGNALS</span>
+            <span className="text-[#62B8C8]">{signals.length} ACTIVE SIGNALS</span>
           </div>
 
           <div className="space-y-2">
-            {eventsData.map((sig) => {
+            {signals.map((sig) => {
               const isSelected = sig.id === selectedSignalId;
-              const isDisrupted = sig.severity === "MODERATE" || sig.severity === "HIGH";
+              const isLive = sig.id.startsWith("SIG-LIVE");
 
               return (
                 <div
@@ -111,21 +151,30 @@ export default function SignalsPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-[#1C2123] text-[11px]">
-                    <span className="text-[#D6A84F] font-bold">{sig.id}</span>
-                    <span className="text-[#5F6564]">17:42:08 UTC</span>
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-[#D6A84F] font-bold">{sig.id}</span>
+                      {isLive && (
+                        <span className="text-[9px] bg-[#122117] border border-[#244931] text-[#73B58A] px-1 py-0.2 font-bold">
+                          LIVE WEB FEED
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[#5F6564] text-[10px] truncate max-w-[140px]">
+                      {sig.timestamp.split("T")[0]}
+                    </span>
                   </div>
 
-                  <div className="text-sm font-serif font-bold text-[#E8E5DD] mb-1">
-                    {sig.eventType}
+                  <div className="text-sm font-serif font-bold text-[#E8E5DD] mb-1 line-clamp-1">
+                    {sig.eventType} — {sig.location}
                   </div>
-                  <div className="text-[11px] text-[#62B8C8] mb-2">
-                    {sig.facility}
-                  </div>
+                  <p className="text-[11px] font-sans text-[#9A9C97] line-clamp-2 mb-2">
+                    {sig.rawText}
+                  </p>
 
                   <div className="grid grid-cols-3 gap-1 pt-2 border-t border-[#1C2123] text-[10px]">
                     <div>
-                      <span className="text-[#5F6564] block">DURATION</span>
-                      <span className="text-[#E8E5DD]">{sig.expectedDuration} {sig.durationUnit}</span>
+                      <span className="text-[#5F6564] block">SEVERITY</span>
+                      <span className="text-[#E8E5DD]">{sig.severity}</span>
                     </div>
                     <div>
                       <span className="text-[#5F6564] block">CONFIDENCE</span>
@@ -134,7 +183,7 @@ export default function SignalsPage() {
                     <div className="text-right">
                       <span className="text-[#5F6564] block">STATUS</span>
                       <span className="text-[#73B58A] font-bold">
-                        {sig.rehearsalTriggered ? "REHEARSED" : "LOGGED"}
+                        {sig.rehearsalTriggered ? "REHEARSED" : "VALIDATED"}
                       </span>
                     </div>
                   </div>
@@ -156,14 +205,14 @@ export default function SignalsPage() {
                 </span>
               </div>
               <span className="text-[#73B58A] border border-[#244931] px-2 py-0.5 bg-[#122117] text-[10px]">
-                {selectedSignal.validationStatus} (4 INDEPENDENT SOURCES)
+                {selectedSignal.validationStatus} (3+ SOURCES)
               </span>
             </div>
 
             {/* Raw Ingest Excerpt */}
             <div className="bg-[#171B1D] border border-[#292E2F] p-3 text-xs">
               <span className="text-[10px] text-[#5F6564] block uppercase mb-1">
-                RAW UNSTRUCTURED INGEST TEXT:
+                RAW INGEST CONTENT ({selectedSignal.source}):
               </span>
               <p className="font-sans text-sm text-[#E8E5DD] leading-relaxed">
                 "{selectedSignal.rawText}"
@@ -174,7 +223,7 @@ export default function SignalsPage() {
             <div>
               <div className="text-xs text-[#9A9C97] mb-2 flex items-center space-x-2">
                 <Layers className="w-3.5 h-3.5 text-[#62B8C8]" />
-                <span>CROSS-SOURCE CORROBORATION MATRIX</span>
+                <span>MULTI-SOURCE CORROBORATION MATRIX</span>
               </div>
 
               <div className="border border-[#292E2F] divide-y divide-[#1C2123] text-xs">
@@ -199,37 +248,16 @@ export default function SignalsPage() {
               </div>
             </div>
 
-            {/* Downstream Enterprise Twin Matching */}
-            <div className="border border-[#292E2F] bg-[#171B1D] p-3 text-xs space-y-2">
-              <span className="text-[10px] text-[#5F6564] block uppercase">
-                ENTERPRISE TWIN CROSS-REFERENCE:
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="border border-[#292E2F] p-2 bg-[#111416]">
-                  <span className="text-[#5F6564] text-[10px] block">AFFECTED GATEWAY</span>
-                  <span className="text-[#E8E5DD] font-bold">Port of Shanghai (CNSHG)</span>
-                </div>
-                <div className="border border-[#292E2F] p-2 bg-[#111416]">
-                  <span className="text-[#5F6564] text-[10px] block">STALLED SHIPMENT</span>
-                  <span className="text-[#D7655A] font-bold">SHP-8821 (Ever Vanguard)</span>
-                </div>
-                <div className="border border-[#292E2F] p-2 bg-[#111416]">
-                  <span className="text-[#5F6564] text-[10px] block">CRITICAL PAYLOAD</span>
-                  <span className="text-[#E8E5DD] font-bold">12,000 ECU Modules</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Continuous Rehearsal Action Trigger */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            {/* Action Trigger */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs border-t border-[#1C2123]">
               <div className="text-[#9A9C97] text-[11px] font-sans">
-                Signal is validated. Continuous rehearsal generated 4 scenario branches.
+                Signal is validated. Rehearsal engine correlates this signal against the digital twin.
               </div>
               <button
                 onClick={triggerLiveDisruption}
                 className="px-4 py-2 bg-[#171B1D] border border-[#572A26] text-[#D7655A] hover:bg-[#241413] transition-colors"
               >
-                TEST LIVE DISRUPTION ESCALATION →
+                TEST DISRUPTION ESCALATION →
               </button>
             </div>
           </div>

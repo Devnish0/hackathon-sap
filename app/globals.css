@@ -5,15 +5,16 @@
 :root {
   --background: #0B0D0E;
   --surface: #111416;
-  --surface-raised: #171B1D;
+  --surface-raised: #161A1C;
+  --surface-overlay: #1B2023;
 
   --text-primary: #E8E5DD;
   --text-secondary: #9A9C97;
-  --text-muted: #5F6564;
+  --text-muted: #656B69;
 
-  --border: #292E2F;
-  --border-subtle: #1C2123;
-  --border-focus: #414A4D;
+  --border: #23282A;
+  --border-subtle: #171B1D;
+  --border-focus: #373F42;
 
   --accent: #D6A84F;
   --telemetry: #62B8C8;
@@ -25,7 +26,6 @@
 
 * {
   box-sizing: border-box;
-  border-color: var(--border);
 }
 
 html,
@@ -41,49 +41,49 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle Technical Atmosphere Grid (Zero Gradients, Pure Lines) */
+/* Subtle Technical Atmosphere Grid (Very faint, zero distraction) */
 .bg-mission-grid {
   background-color: var(--background);
   background-image: 
-    linear-gradient(to right, rgba(41, 46, 47, 0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(41, 46, 47, 0.25) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(to right, rgba(41, 46, 47, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(41, 46, 47, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
-/* Precision Coordinate Marks & Calibration Ticks */
-.tech-mark-corner {
+/* Precision Corner Marks */
+.tech-corner {
   position: relative;
 }
-.tech-mark-corner::before {
+.tech-corner::before {
   content: "";
   position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 6px;
-  height: 6px;
-  border-top: 1.5px solid var(--telemetry);
-  border-left: 1.5px solid var(--telemetry);
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-top: 1px solid var(--telemetry);
+  border-left: 1px solid var(--telemetry);
   pointer-events: none;
 }
-.tech-mark-corner::after {
+.tech-corner::after {
   content: "";
   position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 6px;
-  height: 6px;
-  border-bottom: 1.5px solid var(--telemetry);
-  border-right: 1.5px solid var(--telemetry);
+  bottom: 0;
+  right: 0;
+  width: 5px;
+  height: 5px;
+  border-bottom: 1px solid var(--telemetry);
+  border-right: 1px solid var(--telemetry);
   pointer-events: none;
 }
 
-/* Custom Industrial Scrollbar */
+/* Minimalist Industrial Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--surface);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
@@ -93,56 +93,28 @@ body {
   background: var(--text-muted);
 }
 
-/* Operational Badges & Solid Status Tokens */
-.badge-solid-telemetry {
-  background-color: #112226;
-  border: 1px solid #234E57;
-  color: var(--telemetry);
-}
-.badge-solid-warning {
-  background-color: #241D12;
-  border: 1px solid #544121;
-  color: var(--warning);
-}
-.badge-solid-danger {
-  background-color: #241413;
-  border: 1px solid #572A26;
-  color: var(--danger);
-}
-.badge-solid-success {
-  background-color: #122117;
-  border: 1px solid #244931;
-  color: var(--success);
-}
-.badge-solid-neutral {
-  background-color: var(--surface-raised);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-}
-
-/* Pure Monospace Numeric Tables */
 .tabular-data {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-ibm-plex-mono), monospace;
 }
 
-/* React Flow Overrides for Dark Mission Control Theme */
+/* Clean React Flow Canvas Overrides */
 .react-flow__background {
   background-color: transparent !important;
 }
 .react-flow__controls {
-  background: var(--surface-raised) !important;
+  background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 0px !important;
   box-shadow: none !important;
 }
 .react-flow__controls-button {
-  background: var(--surface-raised) !important;
+  background: var(--surface) !important;
   border-bottom: 1px solid var(--border) !important;
   color: var(--text-secondary) !important;
 }
 .react-flow__controls-button:hover {
-  background: var(--surface) !important;
+  background: var(--surface-raised) !important;
   color: var(--text-primary) !important;
 }
 .react-flow__controls-button svg {
