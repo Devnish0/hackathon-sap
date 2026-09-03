@@ -87,11 +87,10 @@ export default function ControlTowerPage() {
                 <button
                   key={suite.id}
                   onClick={() => setActiveMockSuiteId(suite.id)}
-                  className={`btn btn-xs font-mono rounded-lg gap-1.5 transition-all ${
-                    activeMockSuite.id === suite.id
+                  className={`btn btn-xs font-mono rounded-lg gap-1.5 transition-all ${activeMockSuite.id === suite.id
                       ? "btn-accent shadow-sm"
                       : "btn-ghost border border-base-300"
-                  }`}
+                    }`}
                 >
                   {mockIcon(suite.category)}
                   <span>{suite.title.split("—")[0].trim()}</span>
@@ -176,18 +175,21 @@ export default function ControlTowerPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
         {/* ── Digital Twin (dominant, ~60%) ── */}
-        <div className="xl:col-span-8 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <span className="badge badge-primary badge-xs" />
-              <span className="font-mono text-base-content/60 uppercase tracking-wider font-medium">
+        <div className="xl:col-span-8 space-y-2 min-w-0">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+              <span className="badge badge-primary badge-xs shrink-0" />
+              <span className="font-mono text-base-content/60 uppercase tracking-wider font-medium shrink-0">
                 Computational Digital Twin
               </span>
-              <span className="badge badge-ghost badge-xs font-mono">
+              <span
+                className="badge badge-ghost badge-xs font-mono truncate max-w-[240px] sm:max-w-[420px] whitespace-nowrap"
+                title={`Disrupted Node: ${currentSignal.facility || "Active Corridor"}`}
+              >
                 Disrupted Node: {currentSignal.facility || "Active Corridor"}
               </span>
             </div>
-            <Link href="/network" className="btn btn-ghost btn-xs gap-1 font-mono text-primary">
+            <Link href="/network" className="btn btn-ghost btn-xs gap-1 font-mono text-primary shrink-0">
               <Maximize2 className="w-3 h-3" />
               Full Screen
             </Link>
@@ -214,11 +216,6 @@ export default function ControlTowerPage() {
                     <span className="badge badge-warning badge-sm font-mono font-bold gap-1 animate-pulse">
                       <span className="loading loading-spinner loading-xs" />
                       AI Synthesizing...
-                    </span>
-                  ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
-                    <span className="badge badge-accent badge-sm font-mono font-bold gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {dynamicNetworkFlow.aiGenerated ? "GEMINI AI PLAYBOOK" : "AI ADAPTIVE PLAYBOOK"}
                     </span>
                   ) : (
                     <span className="badge badge-primary badge-sm font-mono font-bold">#1 RANKED PLAYBOOK</span>
@@ -286,19 +283,17 @@ export default function ControlTowerPage() {
                   {currentPlanPoints.map((point) => (
                     <div
                       key={point.step}
-                      className={`p-2.5 rounded-xl border transition-all ${
-                        point.gate === "HUMAN_APPROVAL_REQUIRED"
+                      className={`p-2.5 rounded-xl border transition-all ${point.gate === "HUMAN_APPROVAL_REQUIRED"
                           ? "bg-warning/5 border-warning/30 shadow-xs"
                           : "bg-base-200/60 border-base-300"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start gap-2.5">
                         <span
-                          className={`w-5 h-5 rounded-full font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
-                            point.gate === "HUMAN_APPROVAL_REQUIRED"
+                          className={`w-5 h-5 rounded-full font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${point.gate === "HUMAN_APPROVAL_REQUIRED"
                               ? "bg-warning text-warning-content"
                               : "bg-primary text-primary-content"
-                          }`}
+                            }`}
                         >
                           {point.step}
                         </span>
@@ -312,11 +307,10 @@ export default function ControlTowerPage() {
                                 {point.agent}
                               </span>
                               <span
-                                className={`badge badge-xs font-mono font-semibold ${
-                                  point.gate === "HUMAN_APPROVAL_REQUIRED"
+                                className={`badge badge-xs font-mono font-semibold ${point.gate === "HUMAN_APPROVAL_REQUIRED"
                                     ? "badge-warning"
                                     : "badge-info"
-                                }`}
+                                  }`}
                               >
                                 {point.gate === "HUMAN_APPROVAL_REQUIRED" ? "APPROVAL REQ" : "AUTO-EXEC"}
                               </span>
@@ -408,11 +402,10 @@ export default function ControlTowerPage() {
               <div
                 key={scen.id}
                 onClick={() => setSelectedHorizon(scen.id)}
-                className={`card cursor-pointer transition-all hover:shadow-md border ${
-                  isSelected
+                className={`card cursor-pointer transition-all hover:shadow-md border ${isSelected
                     ? "bg-primary/5 border-primary shadow-md ring-1 ring-primary/20"
                     : "bg-base-100 border-base-300 hover:border-base-content/20"
-                }`}
+                  }`}
               >
                 <div className="card-body p-4 gap-2">
                   <div className="flex items-center justify-between">

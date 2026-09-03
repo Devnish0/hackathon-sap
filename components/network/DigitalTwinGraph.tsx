@@ -182,48 +182,43 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
   return (
     <div className="relative w-full flex flex-col bg-base-100 overflow-hidden rounded-2xl border border-base-300">
       {/* Pipeline stages */}
-      <div className="px-4 py-2.5 border-b border-base-200 bg-base-200/50 flex items-center justify-between text-[11px] font-mono text-base-content/40">
-        <div className="flex items-center gap-4 overflow-x-auto">
-          <span className="text-base-content/60 font-semibold uppercase tracking-wider">Pipeline:</span>
+      <div className="px-4 py-2 border-b border-base-200 bg-base-200/50 flex items-center justify-between gap-3 text-[11px] font-mono text-base-content/40">
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-none min-w-0 flex-1 whitespace-nowrap">
+          <span className="text-base-content/60 font-semibold uppercase tracking-wider shrink-0">Pipeline:</span>
           {["Suppliers", "Ports", "Transit", "Plants", "Hubs", "OEM"].map((s, i) => (
             <React.Fragment key={s}>
-              {i > 0 && <span className="text-base-content/15">→</span>}
-              <span className={
+              {i > 0 && <span className="text-base-content/15 shrink-0">→</span>}
+              <span className={`shrink-0 ${
                 systemMode === "LIVE_DISRUPTION" && (
                   (disruptedNodeId === "SUP-01" && i === 0) ||
                   (disruptedNodeId === "PORT-01" && (i === 1 || i === 2)) ||
                   (disruptedNodeId === "INV-01" && (i === 3 || i === 4)) ||
                   (disruptedNodeId === "SHP-8821" && i === 2)
                 ) ? "text-error font-bold" : ""
-              }>
+              }`}>
                 {i + 1}. {s}
               </span>
             </React.Fragment>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-[10px]">
+        <div className="flex items-center gap-3 text-[10px] shrink-0">
           {isAiSynthesizing ? (
-            <span className="badge badge-warning badge-xs font-mono gap-1 animate-pulse">
+            <span className="badge badge-warning badge-xs font-mono gap-1 animate-pulse shrink-0">
               <span className="loading loading-spinner loading-xs" />
-              AI Synthesizing Flow...
+              <span>AI Syncing...</span>
             </span>
           ) : dynamicNetworkFlow && dataMode === "REAL_TIME" ? (
-            <div className="flex items-center gap-1.5">
-              <span className="badge badge-primary badge-xs font-mono gap-1">
-                <Sparkles className="w-2.5 h-2.5 text-primary-content" />
-                {dynamicNetworkFlow.aiGenerated ? "GEMINI 3.6 TOPOLOGY" : "AI ADAPTIVE FLOW"}
-              </span>
-              <button
-                onClick={() => refreshAiSimulation(true)}
-                disabled={isAiSynthesizing}
-                title="Hard reload topology from Gemini AI"
-                className="btn btn-ghost btn-xs px-1 h-5 min-h-0 text-base-content/50 hover:text-primary"
-              >
-                <RotateCw className={`w-2.5 h-2.5 ${isAiSynthesizing ? "animate-spin text-primary" : ""}`} />
-              </button>
-            </div>
+            <button
+              onClick={() => refreshAiSimulation(true)}
+              disabled={isAiSynthesizing}
+              title="Hard reload topology from Gemini AI"
+              className="btn btn-ghost btn-xs px-1.5 h-6 min-h-0 text-base-content/50 hover:text-primary gap-1 font-mono text-[10px] border border-base-300 shrink-0"
+            >
+              <RotateCw className={`w-2.5 h-2.5 ${isAiSynthesizing ? "animate-spin text-primary" : ""}`} />
+              <span className="hidden sm:inline">Sync AI</span>
+            </button>
           ) : null}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-1"><span className="badge badge-success badge-xs" /><span>OK</span></div>
             <div className="flex items-center gap-1"><span className="badge badge-warning badge-xs" /><span>Risk</span></div>
             <div className="flex items-center gap-1"><span className="badge badge-error badge-xs" /><span>Down</span></div>
@@ -265,11 +260,10 @@ export default function DigitalTwinGraph({ height = "560px", showInspector = tru
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-base-content/40">Health</span>
-                    <span className={`badge badge-sm font-bold ${
-                      selectedNode.id === disruptedNodeId && systemMode === "LIVE_DISRUPTION"
-                        ? "badge-error"
-                        : selectedNode.healthScore > 75 ? "badge-success" : selectedNode.healthScore > 40 ? "badge-warning" : "badge-error"
-                    }`}>
+                    <span className={`badge badge-sm font-bold ${selectedNode.id === disruptedNodeId && systemMode === "LIVE_DISRUPTION"
+                      ? "badge-error"
+                      : selectedNode.healthScore > 75 ? "badge-success" : selectedNode.healthScore > 40 ? "badge-warning" : "badge-error"
+                      }`}>
                       {selectedNode.id === disruptedNodeId && systemMode === "LIVE_DISRUPTION" ? "18%" : `${selectedNode.healthScore}%`}
                     </span>
                   </div>
