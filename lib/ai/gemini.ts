@@ -88,6 +88,20 @@ export function getEffectiveApiKey(apiKey?: string): string | undefined {
   return undefined;
 }
 
+const CANDIDATE_MODELS = [
+  "gemini-2.5-flash-lite",
+  "gemini-flash-lite-latest",
+  "gemini-3.6-flash",
+  "gemini-flash-latest",
+];
+
+function cleanJson(text: string): string {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, "");
+  cleaned = cleaned.replace(/\s*```$/i, "");
+  return cleaned.trim();
+}
+
 export async function analyzeSignalWithGemini(
   rawText: string,
   sourceName: string,
@@ -96,8 +110,7 @@ export async function analyzeSignalWithGemini(
   const effectiveKey = getEffectiveApiKey(apiKey);
 
   if (effectiveKey) {
-    try {
-      const prompt = `You are the Sensing & Signal Validation AI for "Resilience Autopilot", an enterprise supply-chain resilience decision control system.
+    const prompt = `You are the Sensing & Signal Validation AI for "Resilience Autopilot", an enterprise supply-chain resilience decision control system.
 Analyze this raw external signal from ${sourceName}:
 "${rawText}"
 
@@ -116,48 +129,53 @@ Extract structured supply chain intelligence and respond strictly with a valid J
 }
 Output only the JSON object, with no markdown formatting or commentary.`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${effectiveKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              responseMimeType: "application/json",
-            },
-          }),
-        }
-      );
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (content) {
-          const parsed = JSON.parse(content);
-          return {
-            eventType: parsed.eventType || "PORT_DISRUPTION",
-            severity: parsed.severity || "MODERATE",
-            confidence: parsed.confidence || 0.88,
-            location: parsed.location || "East Asia Maritime Corridor",
-            facility: parsed.facility || "Deepwater Marine Gateway",
-            expectedDuration: parsed.expectedDuration || 24,
-            durationUnit: parsed.durationUnit || "hours",
-            summary: parsed.summary || rawText.slice(0, 140),
-            vulnerabilityAnalysis:
-              parsed.vulnerabilityAnalysis ||
-              "Downstream container delay risks assembly buffer depletion at Midwest staging hubs.",
-            recommendedAgentFocus: parsed.recommendedAgentFocus || [
-              "LOGISTICS",
-              "INVENTORY",
-            ],
-            isAiGenerated: true,
-          };
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content) {
+            const parsed = JSON.parse(cleanJson(content));
+            return {
+              eventType: parsed.eventType || "PORT_DISRUPTION",
+              severity: parsed.severity || "MODERATE",
+              confidence: parsed.confidence || 0.88,
+              location: parsed.location || "East Asia Maritime Corridor",
+              facility: parsed.facility || "Deepwater Marine Gateway",
+              expectedDuration: parsed.expectedDuration || 24,
+              durationUnit: parsed.durationUnit || "hours",
+              summary: parsed.summary || rawText.slice(0, 140),
+              vulnerabilityAnalysis:
+                parsed.vulnerabilityAnalysis ||
+                "Downstream container delay risks assembly buffer depletion at Midwest staging hubs.",
+              recommendedAgentFocus: parsed.recommendedAgentFocus || [
+                "LOGISTICS",
+                "INVENTORY",
+              ],
+              isAiGenerated: true,
+            };
+          }
+        } else {
+          console.warn(`Gemini model ${model} returned HTTP ${response.status}, trying next model in chain...`);
         }
+      } catch (err) {
+        console.warn(`Gemini attempt with ${model} failed, trying next candidate:`, err);
       }
-    } catch (err) {
-      console.warn("Gemini API call failed, using deterministic cognitive fallback:", err);
     }
   }
 
@@ -242,8 +260,7 @@ export async function synthesizeNetworkFlowAndStrategy(
   const rawText = signal.rawText || signal.location || "Supply chain gateway disruption";
 
   if (effectiveKey) {
-    try {
-      const prompt = `You are the master agentic orchestrator for "Resilience Autopilot", an enterprise supply-chain decision control system.
+    const prompt = `You are the master agentic orchestrator for "Resilience Autopilot", an enterprise supply-chain decision control system.
 An active disruption has occurred:
 - Event: "${signal.eventType}"
 - Location: "${signal.location}"
@@ -320,100 +337,105 @@ Respond strictly with a single JSON object matching this exact schema:
 }
 Output only the JSON object with no extra text.`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${effectiveKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              responseMimeType: "application/json",
-            },
-          }),
-        }
-      );
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.3,
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (content) {
-          const p = JSON.parse(content);
-          return {
-            supplier: {
-              primaryName: p.supplier?.primaryName || "Regional Component Supplier (Tier 1)",
-              primaryLocation: p.supplier?.primaryLocation || signal.location,
-              primaryStatus: p.supplier?.primaryStatus || "AT_RISK",
-              primaryThroughput: p.supplier?.primaryThroughput || "42,000 units/mo",
-              backupName: "Monterrey Advanced Substrates",
-              backupLocation: "Nuevo León, MX",
-              domesticName: "Midwest Semi & Dynamics",
-              domesticLocation: "Detroit, US",
-            },
-            ports: {
-              disruptedPortName: p.ports?.disruptedPortName || signal.facility || "Primary Deepwater Terminal",
-              disruptedLocation: p.ports?.disruptedLocation || signal.location,
-              disruptedThroughput: p.ports?.disruptedThroughput || "Berth lock & queue hold",
-              backupPortName: p.ports?.backupPortName || "Port of Busan (KRPUS)",
-              backupLocation: p.ports?.backupLocation || "Busan, KR",
-              destinationPortName: p.ports?.destinationPortName || "Port of Long Beach (USLGB)",
-              destinationLocation: p.ports?.destinationLocation || "California, US",
-            },
-            shipment: {
-              vesselName: p.shipment?.vesselName || "Vessel Ever Vanguard (SHP-8821)",
-              route: p.shipment?.route || `${signal.location} → US West Coast`,
-              status: p.shipment?.status || "DISRUPTED",
-              exposureFormatted: "₹6.8Cr",
-            },
-            plant: {
-              name: p.plant?.name || "Detroit Assembly Plant (US-01)",
-              location: p.plant?.location || "Michigan, US",
-              bufferRemainingDays: p.plant?.bufferRemainingDays || 3.2,
-            },
-            hybridResponse: {
-              title: p.hybridResponse?.title || "Hybrid Response Protocol (AI-Optimized)",
-              summary: p.hybridResponse?.summary || "Diverts high-priority consignments through secondary hubs while activating domestic buffer surge.",
-              tradeoffRationale: p.hybridResponse?.tradeoffRationale || "Balances expedited inventory positioning against capacity guarantees to protect 97% SLA.",
-              costFormatted: p.hybridResponse?.costFormatted || "₹6.8L",
-              recoveryDays: p.hybridResponse?.recoveryDays || 7,
-              serviceLevelPercent: p.hybridResponse?.serviceLevelPercent || 97,
-              risk: p.hybridResponse?.risk || "LOW",
-              autonomyLevel: p.hybridResponse?.autonomyLevel || "HUMAN_APPROVAL_REQUIRED",
-              planPoints: p.hybridResponse?.planPoints || [
-                {
-                  step: 1,
-                  action: "Redistribute 1,500 Buffer Units from Regional Staging",
-                  detail: "Absorbs initial transit slip to avoid assembly line starvation.",
-                  gate: "AUTO_EXECUTE",
-                  gateLabel: "AUTO EXECUTE",
-                  agent: "INVENTORY",
-                },
-                {
-                  step: 2,
-                  action: "Reroute Outbound Consignment via Secondary Feeder Hub",
-                  detail: "Transfers container manifest to bypass primary gateway congestion.",
-                  gate: "AUTO_EXECUTE",
-                  gateLabel: "AUTO EXECUTE",
-                  agent: "LOGISTICS",
-                },
-                {
-                  step: 3,
-                  action: "Authorize Production Volume Commitment on Backup Supplier Line",
-                  detail: "Secures emergency allocation with qualified nearshore partner.",
-                  gate: "HUMAN_APPROVAL_REQUIRED",
-                  gateLabel: "APPROVAL REQUIRED",
-                  agent: "PROCUREMENT",
-                },
-              ],
-            },
-            aiGenerated: true,
-            modelUsed: "Gemini 3.6 Flash (Live AI)",
-          };
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content) {
+            const p = JSON.parse(cleanJson(content));
+            return {
+              supplier: {
+                primaryName: p.supplier?.primaryName || "Regional Component Supplier (Tier 1)",
+                primaryLocation: p.supplier?.primaryLocation || signal.location,
+                primaryStatus: p.supplier?.primaryStatus || "AT_RISK",
+                primaryThroughput: p.supplier?.primaryThroughput || "42,000 units/mo",
+                backupName: "Monterrey Advanced Substrates",
+                backupLocation: "Nuevo León, MX",
+                domesticName: "Midwest Semi & Dynamics",
+                domesticLocation: "Detroit, US",
+              },
+              ports: {
+                disruptedPortName: p.ports?.disruptedPortName || signal.facility || "Primary Deepwater Terminal",
+                disruptedLocation: p.ports?.disruptedLocation || signal.location,
+                disruptedThroughput: p.ports?.disruptedThroughput || "Berth lock & queue hold",
+                backupPortName: p.ports?.backupPortName || "Port of Busan (KRPUS)",
+                backupLocation: p.ports?.backupLocation || "Busan, KR",
+                destinationPortName: p.ports?.destinationPortName || "Port of Long Beach (USLGB)",
+                destinationLocation: p.ports?.destinationLocation || "California, US",
+              },
+              shipment: {
+                vesselName: p.shipment?.vesselName || "Vessel Ever Vanguard (SHP-8821)",
+                route: p.shipment?.route || `${signal.location} → US West Coast`,
+                status: p.shipment?.status || "DISRUPTED",
+                exposureFormatted: "₹6.8Cr",
+              },
+              plant: {
+                name: p.plant?.name || "Detroit Assembly Plant (US-01)",
+                location: p.plant?.location || "Michigan, US",
+                bufferRemainingDays: p.plant?.bufferRemainingDays || 3.2,
+              },
+              hybridResponse: {
+                title: p.hybridResponse?.title || "Hybrid Response Protocol (AI-Optimized)",
+                summary: p.hybridResponse?.summary || "Diverts high-priority consignments through secondary hubs while activating domestic buffer surge.",
+                tradeoffRationale: p.hybridResponse?.tradeoffRationale || "Balances expedited inventory positioning against capacity guarantees to protect 97% SLA.",
+                costFormatted: p.hybridResponse?.costFormatted || "₹6.8L",
+                recoveryDays: p.hybridResponse?.recoveryDays || 7,
+                serviceLevelPercent: p.hybridResponse?.serviceLevelPercent || 97,
+                risk: p.hybridResponse?.risk || "LOW",
+                autonomyLevel: p.hybridResponse?.autonomyLevel || "HUMAN_APPROVAL_REQUIRED",
+                planPoints: p.hybridResponse?.planPoints || [
+                  {
+                    step: 1,
+                    action: "Redistribute 1,500 Buffer Units from Regional Staging",
+                    detail: "Absorbs initial transit slip to avoid assembly line starvation.",
+                    gate: "AUTO_EXECUTE",
+                    gateLabel: "AUTO EXECUTE",
+                    agent: "INVENTORY",
+                  },
+                  {
+                    step: 2,
+                    action: "Reroute Outbound Consignment via Secondary Feeder Hub",
+                    detail: "Transfers container manifest to bypass primary gateway congestion.",
+                    gate: "AUTO_EXECUTE",
+                    gateLabel: "AUTO EXECUTE",
+                    agent: "LOGISTICS",
+                  },
+                  {
+                    step: 3,
+                    action: "Authorize Production Volume Commitment on Backup Supplier Line",
+                    detail: "Secures emergency allocation with qualified nearshore partner.",
+                    gate: "HUMAN_APPROVAL_REQUIRED",
+                    gateLabel: "APPROVAL REQUIRED",
+                    agent: "PROCUREMENT",
+                  },
+                ],
+              },
+              aiGenerated: true,
+              modelUsed: `Gemini (${model})`,
+            };
+          }
+        } else {
+          console.warn(`Gemini model ${model} returned HTTP ${response.status}, trying next model in chain...`);
         }
+      } catch (e) {
+        console.warn(`Gemini attempt with ${model} failed, trying next candidate:`, e);
       }
-    } catch (e) {
-      console.warn("Gemini dynamic topology generation failed, using cognitive semantic fallback:", e);
     }
   }
 
